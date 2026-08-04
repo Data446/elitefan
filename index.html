@@ -5,28 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ELITE FAN A446 JEMBER</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JsBarcode -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
 
     <script>
-        // Mencegah error jika tailwind belum termuat
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        appBg: '#0F172A',     // Dark Navy
-                        appCard: '#1E293B',   // Card
-                        appPrimary: '#DC2626', // Merah
-                        appHover: '#EF4444',  // Hover Merah
-                        appText: '#FFFFFF',   // Putih
-                        appTextSec: '#CBD5E1' // Abu-abu gelap
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                        appBg: '#0F172A',
+                        appCard: '#1E293B',
+                        appPrimary: '#DC2626',
+                        appHover: '#EF4444',
+                        appText: '#FFFFFF',
+                        appTextSec: '#CBD5E1'
                     }
                 }
             }
@@ -34,566 +27,152 @@
     </script>
 
     <style>
-        /* Custom Scrollbar for list and detail view */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0F172A; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569; 
-        }
-
-        /* Snap scrolling for images */
-        .snap-x {
-            scroll-snap-type: x mandatory;
-        }
-        .snap-center {
-            scroll-snap-align: center;
-        }
-
-        /* Prevent text selection on quick taps */
-        .no-select {
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        /* Toast Animation */
-        @keyframes slideUpFade {
-            0% { opacity: 0; transform: translate(-50%, 20px); }
-            10% { opacity: 1; transform: translate(-50%, 0); }
-            90% { opacity: 1; transform: translate(-50%, 0); }
-            100% { opacity: 0; transform: translate(-50%, -20px); }
-        }
-        .toast-animate {
-            animation: slideUpFade 2s ease-in-out forwards;
-        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .snap-x { scroll-snap-type: x mandatory; }
+        .snap-center { scroll-snap-align: center; }
+        .no-select { -webkit-user-select: none; user-select: none; }
+        @keyframes slideUpFade { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
+        .toast-animate { animation: slideUpFade 0.3s ease-out forwards; }
+        .resizer { position: absolute; top: 0; right: 0; width: 10px; cursor: col-resize; height: 100%; z-index: 25; transition: background-color 0.2s; }
+        .resizer:hover { background-color: rgba(220, 38, 38, 0.5); }
     </style>
 </head>
 <body class="bg-appBg text-appText font-sans overflow-hidden flex flex-col h-screen no-select">
 
-    <!-- STICKY HEADER -->
-    <header class="bg-appCard border-b border-slate-700 shadow-md sticky top-0 z-40 flex-none">
+    <header class="bg-appCard border-b border-slate-700 shadow-md sticky top-0 z-40">
         <div class="px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-appPrimary flex items-center justify-center font-bold shadow-lg shadow-red-900/50">
-                    E
-                </div>
-                <h1 class="text-lg font-bold tracking-tight text-white">ELITE FAN <span class="text-appPrimary">A446</span></h1>
-            </div>
-            <button onclick="scanBarcode()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors" title="Scan Barcode">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-            </button>
+            <h1 class="text-lg font-bold text-white">ELITE FAN <span class="text-appPrimary">A446</span></h1>
+            <button onclick="alert('Fitur scan perlu integrasi kamera.')" class="p-2 bg-slate-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg></button>
         </div>
-
-        <!-- Search & Filter Section -->
         <div class="px-4 pb-3">
-            <div class="relative w-full">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-appPrimary focus:ring-1 focus:ring-appPrimary transition-colors" placeholder="Cari Article, Nama, Barcode..." oninput="handleSearch()">
-                <div id="clearSearch" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden cursor-pointer" onclick="document.getElementById('searchInput').value=''; handleSearch();">
-                    <svg class="w-4 h-4 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </div>
-            </div>
-
-            <!-- Categories -->
-            <div class="flex gap-2 mt-3 overflow-x-auto pb-1" id="category-filters">
-                <button onclick="setCategory('ALL')" class="cat-btn active px-4 py-1 rounded-full text-xs font-semibold bg-appPrimary text-white shadow-md shadow-red-900/30 transition-all whitespace-nowrap">Semua</button>
-                <button onclick="setCategory('FAN')" class="cat-btn px-4 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">FAN</button>
-                <button onclick="setCategory('Electrical')" class="cat-btn px-4 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">Electrical</button>
-                <button onclick="setCategory('LIGHTING')" class="cat-btn px-4 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">Lighting</button>
+            <input type="text" id="searchInput" class="w-full pl-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm" placeholder="Cari..." oninput="handleSearch()">
+            <div class="flex gap-2 mt-2 overflow-x-auto pb-1">
+                <button onclick="setCategory('ALL')" class="cat-btn px-4 py-1 rounded-full text-xs bg-appPrimary">Semua</button>
+                <button onclick="setCategory('FAN')" class="cat-btn px-4 py-1 rounded-full text-xs bg-slate-700">FAN</button>
+                <button id="btn-stock-filter" onclick="toggleStockFilter()" class="px-3 py-1 rounded-full text-xs bg-slate-700">Stok Tersedia</button>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 overflow-hidden flex flex-col relative">
-        
-        <!-- Loading Indicator -->
-        <div id="loading-screen" class="absolute inset-0 z-30 bg-appBg flex flex-col items-center justify-center">
-            <svg class="animate-spin h-10 w-10 text-appPrimary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-appTextSec text-sm font-semibold animate-pulse">Menghubungkan API...</p>
-        </div>
-
-        <!-- Result Info -->
-        <div class="px-4 py-2 bg-slate-800/50 text-xs text-appTextSec flex justify-between items-center border-b border-slate-700/50 flex-none">
-            <span id="result-count">Memuat data...</span>
-        </div>
-
-        <!-- Table List Container -->
-        <div id="product-list" class="flex-1 overflow-auto w-full">
-            <!-- Data rendered here via JS -->
-        </div>
+    <main class="flex-1 overflow-auto w-full relative">
+        <div id="product-list" class="w-max min-w-full"></div>
     </main>
 
-    <!-- DETAIL MODAL (Overlay) -->
-    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex flex-col justify-end transition-opacity duration-300 opacity-0">
-        
-        <!-- Modal Content Container -->
-        <div id="detail-content" class="bg-appBg w-full h-[90vh] rounded-t-2xl shadow-2xl flex flex-col transform translate-y-full transition-transform duration-300 relative border-t border-slate-700">
-            
-            <!-- Handle bar for mobile feel -->
-            <div class="w-full flex justify-center pt-3 pb-1" onclick="closeDetail()">
-                <div class="w-12 h-1.5 bg-slate-600 rounded-full"></div>
-            </div>
-
-            <!-- Close button (Top Right) -->
-            <button onclick="closeDetail()" class="absolute top-4 right-4 p-2 bg-slate-800 rounded-full text-slate-300 hover:text-white transition-colors z-10 shadow-lg">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-
-            <!-- Scrollable Detail Area -->
-            <div class="flex-1 overflow-y-auto pb-6">
-                
-                <!-- Image Slider -->
-                <div id="image-slider-container" class="relative w-full h-64 bg-white hidden border-b border-slate-700">
-                    <div id="image-slider" class="flex overflow-x-auto snap-x w-full h-full hide-scroll">
-                        <!-- Images injected here -->
-                    </div>
-                    <!-- Slider Indicators -->
-                    <div id="slider-indicators" class="absolute bottom-3 left-0 right-0 flex justify-center gap-2"></div>
-                </div>
-
-                <!-- Essential Info Card -->
-                <div class="p-4 bg-appCard m-3 rounded-xl border border-slate-700 shadow-lg">
-                    <div class="flex justify-between items-start mb-2">
-                        <span id="detail-category" class="px-2 py-1 bg-slate-700 text-appTextSec text-xs rounded-md font-semibold tracking-wider">CATEGORY</span>
-                        <span id="detail-status" class="px-2 py-1 bg-green-900/50 text-green-400 border border-green-800 text-xs rounded-md font-bold cursor-pointer" onclick="copyToClipboard(this.innerText); showToast('Status disalin!')">STATUS</span>
-                    </div>
-                    <h3 id="detail-name" class="text-xl font-bold text-white leading-tight mb-1 cursor-pointer active:text-slate-300 transition-colors" onclick="copyToClipboard(this.innerText); showToast('Nama disalin!')" title="Ketuk untuk menyalin">Product Name</h3>
-                    <p id="detail-article" class="text-appPrimary font-mono text-sm mb-4 cursor-pointer active:text-red-400 transition-colors inline-block" onclick="copyToClipboard(this.innerText); showToast('Article disalin!')" title="Ketuk untuk menyalin">ARTICLE NO</p>
-                    
-                    <div class="grid grid-cols-2 gap-4 border-t border-slate-700 pt-3">
-                        <div class="cursor-pointer" onclick="copyToClipboard(document.getElementById('detail-price').innerText); showToast('Harga disalin!')">
-                            <p class="text-xs text-appTextSec">Harga Promo</p>
-                            <p id="detail-price" class="text-lg font-bold text-white">Rp -</p>
-                        </div>
-                        <div class="text-right cursor-pointer" onclick="copyToClipboard(document.getElementById('detail-stock').innerText); showToast('Stok disalin!')">
-                            <p class="text-xs text-appTextSec">Stock (A446)</p>
-                            <p id="detail-stock" class="text-lg font-bold text-white">-</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dynamic Fields Container -->
-                <div class="p-3 mb-2">
-                    <h4 class="text-sm font-bold text-appTextSec mb-3 px-1 uppercase tracking-wider">Informasi Lengkap <span class="text-[10px] text-slate-500 font-normal normal-case ml-1">(Ketuk untuk menyalin)</span></h4>
-                    <div id="dynamic-fields" class="bg-appCard border border-slate-700 rounded-xl overflow-hidden shadow-sm">
-                        <!-- Fields injected here -->
-                    </div>
-                </div>
-
-                <!-- Barcode Section (Posisi Paling Bawah) -->
-                <div id="barcode-container" class="hidden p-4 bg-white m-3 mb-8 rounded-xl flex-col items-center justify-center shadow-lg cursor-pointer active:bg-slate-200 transition-colors" title="Ketuk untuk menyalin teks barcode">
-                    <p class="text-xs text-slate-500 font-bold mb-2">SCAN BARCODE</p>
-                    <svg id="barcode-svg" class="max-w-full h-24"></svg>
-                    <p id="barcode-text" class="text-xs text-slate-600 font-mono mt-1"></p>
-                </div>
-
-            </div>
-        </div>
+    <div id="pagination-controls" class="p-2 bg-slate-800 flex justify-between items-center text-xs">
+        <button onclick="changePage(-1)" class="px-3 py-1 bg-slate-700 rounded">Prev</button>
+        <span id="page-info">1</span>
+        <button onclick="changePage(1)" class="px-3 py-1 bg-slate-700 rounded">Next</button>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-xl text-sm font-medium z-[60] pointer-events-none hidden border border-slate-700">
-        Copied!
+    <!-- DETAIL MODAL -->
+    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/80 hidden flex flex-col justify-end">
+        <div id="detail-content" class="bg-appBg w-full h-[90vh] rounded-t-2xl p-4 overflow-y-auto">
+            <button onclick="closeDetail()" class="text-white mb-4">Tutup</button>
+            <h3 id="detail-name" class="text-xl font-bold mb-2 cursor-pointer" onclick="copyToClipboard(this.innerText)"></h3>
+            <p id="detail-article" class="text-appPrimary font-mono cursor-pointer" onclick="copyToClipboard(this.innerText)"></p>
+            <div id="dynamic-fields" class="mt-4 space-y-2"></div>
+            <div id="barcode-container" class="mt-8 bg-white p-4 rounded flex flex-col items-center">
+                <svg id="barcode-svg"></svg>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- GLOBAL STATE ---
-        let allData = []; 
+        // --- DATA & STATE ---
+        let allData = [];
         let filteredProducts = [];
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 50;
+        let visibleColumns = [];
+        let showOnlyInStock = false;
         let currentCategory = 'ALL';
-        const MAX_RENDER = 200; // Optimal untuk HP
 
-        // --- DOM ELEMENTS ---
-        const productListEl = document.getElementById('product-list');
-        const searchInput = document.getElementById('searchInput');
-        const clearSearchBtn = document.getElementById('clearSearch');
-        const countDisplay = document.getElementById('result-count');
-        const loadingScreen = document.getElementById('loading-screen');
-        const toast = document.getElementById('toast');
-
-        // PENTING: GANTI STRING DI BAWAH DENGAN URL WEB APP APPS SCRIPT ANDA
-        const APPS_SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec'; 
-
-        // --- UTILITY FUNCTIONS ---
+        // --- CORE FUNCTIONS ---
         function formatNumber(numStr) {
             if (!numStr || numStr === '-' || isNaN(numStr)) return numStr;
             return parseInt(numStr).toLocaleString('id-ID');
         }
 
-        function showToast(message) {
-            toast.innerText = message;
-            toast.classList.remove('hidden');
-            toast.classList.remove('toast-animate');
-            void toast.offsetWidth; // Trigger reflow
-            toast.classList.add('toast-animate');
-            
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 2000);
-        }
-
         function copyToClipboard(text) {
-            if (!text || text === '-') return;
-            try {
-                const el = document.createElement('textarea');
-                el.value = text;
-                el.setAttribute('readonly', '');
-                el.style.position = 'absolute';
-                el.style.left = '-9999px';
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-            } catch (err) {
-                console.error('Gagal menyalin', err);
-            }
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert('Tersalin!');
         }
 
-        // --- DATA FETCHING (FETCH API UNTUK VERCEL) ---
-        window.onload = function() {
-            loadingScreen.style.display = 'flex'; // Tampilkan loading
-            
-            // Validasi URL
-            if (APPS_SCRIPT_API_URL === 'MASUKKAN_URL_APPS_SCRIPT_DISINI' || APPS_SCRIPT_API_URL.trim() === '') {
-                 loadingScreen.innerHTML = `<div class="text-red-400 font-bold px-6 text-center text-sm">
-                    ⚠️ SILAKAN MASUKKAN URL API DI DALAM KODE HTML.<br><br>
-                    Cari variabel <span class="text-white font-mono bg-slate-800 p-1 rounded">APPS_SCRIPT_API_URL</span> di dalam index.html dan ganti dengan URL Web App Apps Script Anda.
-                 </div>`;
-                 return;
-            }
-
-            // Mengambil data menggunakan Javascript standar (Fetch API)
-            fetch(APPS_SCRIPT_API_URL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Jaringan bermasalah atau URL salah.');
-                    }
-                    return response.json();
-                })
+        // --- FETCH DATA ---
+        window.onload = () => {
+            const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec'; 
+            fetch(API)
+                .then(res => res.json())
                 .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
+                    let combined = [];
+                    for(let key in data) {
+                        data[key].forEach(r => { r['_Kategori'] = key; combined.push(r); });
                     }
-                    processData(data);
-                    loadingScreen.style.display = 'none'; // Sembunyikan loading jika sukses
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    loadingScreen.innerHTML = `
-                        <div class="text-red-400 font-bold px-6 text-center">
-                            Gagal mengambil data.<br><br>
-                            Pastikan pengaturan Web App di Google Apps Script sudah "Anyone" (Siapa saja).<br><br>
-                            <span class="text-xs font-normal text-slate-400 break-all">Detail Error: ${error.message}</span>
-                        </div>`;
+                    allData = combined;
+                    visibleColumns = Object.keys(allData[0] || {}).filter(k => !k.startsWith('_'));
+                    filterData();
                 });
-        }
-
-        function processData(sheetData) {
-            let combinedData = [];
-            
-            for (const [sheetName, rows] of Object.entries(sheetData)) {
-                rows.forEach(row => {
-                    row['_Kategori'] = sheetName; 
-                    
-                    const articleKey = Object.keys(row).find(k => k.toUpperCase().includes('ARTICLE') || k.toUpperCase() === 'ARTCILE' || k.toUpperCase() === 'ARTICILE');
-                    if (articleKey) row['_Article_Standar'] = row[articleKey];
-
-                    const nameKey = Object.keys(row).find(k => k.toUpperCase().includes('PRODUCT NAME'));
-                    if (nameKey) row['_Name_Standar'] = row[nameKey];
-
-                    combinedData.push(row);
-                });
-            }
-
-            allData = combinedData;
-            filterData(); 
-        }
-
-        // --- SEARCH & FILTER LOGIC ---
-        function setCategory(cat) {
-            currentCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.className = "cat-btn px-4 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap";
-            });
-            event.target.className = "cat-btn active px-4 py-1 rounded-full text-xs font-semibold bg-appPrimary text-white shadow-md shadow-red-900/30 transition-all whitespace-nowrap";
-            filterData();
-        }
-
-        function handleSearch() {
-            if (searchInput.value.length > 0) {
-                clearSearchBtn.classList.remove('hidden');
-            } else {
-                clearSearchBtn.classList.add('hidden');
-            }
-            filterData();
         }
 
         function filterData() {
-            const query = searchInput.value.toLowerCase().trim();
-            
-            filteredProducts = allData.filter(product => {
-                if (currentCategory !== 'ALL' && product['_Kategori'] !== currentCategory) {
-                    return false;
-                }
-                if (query === '') return true;
-
-                for (let key in product) {
-                    if (!key.startsWith('_')) { 
-                        let val = product[key];
-                        if (val && val.toString().toLowerCase().includes(query)) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            filteredProducts = allData.filter(p => {
+                if(currentCategory !== 'ALL' && p['_Kategori'] !== currentCategory) return false;
+                if(showOnlyInStock && (parseInt(p['STOCK'] || 0) <= 0)) return false;
+                return JSON.stringify(p).toLowerCase().includes(query);
             });
             renderList();
         }
 
-        // --- RENDER LOGIC ---
         function renderList() {
-            productListEl.innerHTML = '';
+            const container = document.getElementById('product-list');
+            container.innerHTML = '';
             
-            if (filteredProducts.length === 0) {
-                productListEl.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-48 text-appTextSec">
-                        <p>Tidak ada produk ditemukan.</p>
-                    </div>`;
-                countDisplay.textContent = '0 Data';
-                return;
-            }
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const pageData = filteredProducts.slice(start, start + ITEMS_PER_PAGE);
 
-            const itemsToRender = filteredProducts.slice(0, MAX_RENDER);
-            countDisplay.innerHTML = `Menampilkan <span class="text-white font-bold mx-1">${itemsToRender.length}</span> dari <span class="text-white font-bold mx-1">${filteredProducts.length}</span> data`;
-            
-            // Ekstrak Header Dinamis
-            let dynamicColumns = [];
-            filteredProducts.forEach(p => {
-                Object.keys(p).forEach(k => {
-                    if (!k.startsWith('_') && k !== 'Gambar' && k !== 'Gambar 2' && !dynamicColumns.includes(k)) {
-                        dynamicColumns.push(k);
-                    }
-                });
+            let html = `<table class="w-full text-left text-xs border-collapse"><thead><tr class="bg-slate-800">`;
+            html += `<th class="p-2 border">Gbr 1</th><th class="p-2 border">Gbr 2</th>`;
+            visibleColumns.forEach(c => html += `<th class="p-2 border">${c}</th>`);
+            html += `</tr></thead><tbody>`;
+
+            pageData.forEach(p => {
+                html += `<tr class="border-b hover:bg-slate-700 cursor-pointer" onclick='openDetail(${JSON.stringify(p).replace(/'/g, "&apos;")})'>`;
+                html += `<td class="p-2 border">${p['Gambar'] ? 'IMG' : '-'}</td><td class="p-2 border">${p['Gambar 2'] ? 'IMG' : '-'}</td>`;
+                visibleColumns.forEach(c => html += `<td class="p-2 border">${p[c] || '-'}</td>`);
+                html += `</tr>`;
             });
-            
-            const table = document.createElement('table');
-            table.className = 'w-full text-left text-white border-collapse';
-            
-            table.innerHTML = `
-                <thead class="bg-slate-800 text-appTextSec font-bold text-[10px] uppercase tracking-wider">
-                    <tr>
-                        <th class="p-1 border-b border-r border-slate-700 min-w-[45px] text-center sticky top-0 left-0 bg-slate-800 z-20 shadow-sm">Gbr 1</th>
-                        <th class="p-1 border-b border-r border-slate-700 min-w-[45px] text-center sticky top-0 left-[45px] bg-slate-800 z-20 shadow-sm">Gbr 2</th>
-                        ${dynamicColumns.map(col => `<th class="p-2 border-b border-r border-slate-700 whitespace-nowrap sticky top-0 bg-slate-800 z-10 shadow-sm">${col}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody id="table-body" class="text-xs font-medium"></tbody>
-            `;
-
-            const tbody = table.querySelector('tbody');
-
-            itemsToRender.forEach((product) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-700 cursor-pointer transition-colors even:bg-slate-800/30';
-                tr.onclick = () => openDetail(product);
-
-                const img1 = (product['Gambar'] && product['Gambar'] !== '-' && product['Gambar'].trim() !== '') ? `<img src="${product['Gambar']}" class="w-8 h-8 object-cover rounded bg-white mx-auto shadow-sm">` : `<div class="w-8 h-8 bg-slate-800 rounded flex items-center justify-center text-[8px] text-slate-500 mx-auto">N/A</div>`;
-                const img2 = (product['Gambar 2'] && product['Gambar 2'] !== '-' && product['Gambar 2'].trim() !== '') ? `<img src="${product['Gambar 2']}" class="w-8 h-8 object-cover rounded bg-white mx-auto shadow-sm">` : `<div class="w-8 h-8 bg-slate-800 rounded flex items-center justify-center text-[8px] text-slate-500 mx-auto">N/A</div>`;
-
-                let trHtml = `
-                    <td class="p-1 border-b border-r border-slate-700 text-center sticky left-0 bg-appBg/95 backdrop-blur z-10">${img1}</td>
-                    <td class="p-1 border-b border-r border-slate-700 text-center sticky left-[45px] bg-appBg/95 backdrop-blur z-10">${img2}</td>
-                `;
-
-                dynamicColumns.forEach(col => {
-                    let val = product[col];
-                    if (val === undefined || val === null || val === '') val = '-';
-                    
-                    if (col === 'HARGA PROMO ALL STORE' || col.includes('PROMO') || col.includes('HARGA')) {
-                        val = val !== '-' && !isNaN(val) ? formatNumber(val) : val;
-                    } else if (col === 'Link to RR' && val !== '-') {
-                        val = `<a href="${val}" target="_blank" class="text-blue-400 underline hover:text-blue-300" onclick="event.stopPropagation()">Link</a>`;
-                    }
-                    trHtml += `<td class="p-2 border-b border-r border-slate-700 whitespace-nowrap truncate max-w-[150px]" title="${val.toString().replace(/"/g, '&quot;')}">${val}</td>`;
-                });
-
-                tr.innerHTML = trHtml;
-                tbody.appendChild(tr);
-            });
-
-            productListEl.appendChild(table);
+            html += `</tbody></table>`;
+            container.innerHTML = html;
         }
 
-        // --- DETAIL VIEW LOGIC ---
-        const modal = document.getElementById('detail-modal');
-        const modalContent = document.getElementById('detail-content');
-
-        function openDetail(product) {
-            document.getElementById('detail-category').innerText = product['_Kategori'] || 'UNKNOWN';
-            
-            const statusVal = product['STATUS'] || '-';
-            const statusEl = document.getElementById('detail-status');
-            statusEl.innerText = statusVal;
-            
-            if(statusVal.toLowerCase() === 'stop' || statusVal.toLowerCase() === 'clearance') {
-                statusEl.className = "px-2 py-1 bg-red-900/50 text-red-400 border border-red-800 text-xs rounded-md font-bold cursor-pointer";
-            } else {
-                statusEl.className = "px-2 py-1 bg-green-900/50 text-green-400 border border-green-800 text-xs rounded-md font-bold cursor-pointer";
-            }
-
-            document.getElementById('detail-name').innerText = product['_Name_Standar'] || '-';
-            document.getElementById('detail-article').innerText = product['_Article_Standar'] || '-';
-            
-            let hargaVal = product['HARGA PROMO ALL STORE'] || product['OLD PROMO'] || '-';
-            if(hargaVal !== '-' && !isNaN(hargaVal)) {
-                hargaVal = 'Rp ' + formatNumber(hargaVal);
-            }
-            document.getElementById('detail-price').innerText = hargaVal;
-            
-            let stockVal = product['Stock A446'] || product['STOCK'] || '-';
-            document.getElementById('detail-stock').innerText = stockVal;
-
-            const sliderContainer = document.getElementById('image-slider-container');
-            const slider = document.getElementById('image-slider');
-            const indicators = document.getElementById('slider-indicators');
-            
-            let images = [];
-            if (product['Gambar'] && product['Gambar'] !== '-' && product['Gambar'].trim() !== '') images.push(product['Gambar']);
-            if (product['Gambar 2'] && product['Gambar 2'] !== '-' && product['Gambar 2'].trim() !== '') images.push(product['Gambar 2']);
-
-            if (images.length > 0) {
-                sliderContainer.classList.remove('hidden');
-                slider.innerHTML = '';
-                indicators.innerHTML = '';
-                
-                images.forEach((imgSrc, index) => {
-                    const div = document.createElement('div');
-                    div.className = "flex-none w-full h-full snap-center bg-white flex items-center justify-center p-2";
-                    div.innerHTML = `<img src="${imgSrc}" class="max-h-full max-w-full object-contain" onerror="this.src='https://placehold.co/400x300/1E293B/EF4444?text=Gambar+Rusak'">`;
-                    slider.appendChild(div);
-
-                    const dot = document.createElement('div');
-                    dot.className = `w-2 h-2 rounded-full ${index === 0 ? 'bg-appPrimary' : 'bg-slate-400'}`;
-                    indicators.appendChild(dot);
-                });
-
-                slider.onscroll = () => {
-                    const scrollPos = slider.scrollLeft;
-                    const width = slider.clientWidth;
-                    const index = Math.round(scrollPos / width);
-                    Array.from(indicators.children).forEach((dot, i) => {
-                        dot.className = `w-2 h-2 rounded-full ${i === index ? 'bg-appPrimary' : 'bg-slate-400'}`;
-                    });
-                };
-            } else {
-                sliderContainer.classList.add('hidden');
-            }
-
-            const dynContainer = document.getElementById('dynamic-fields');
-            dynContainer.innerHTML = '';
-            
-            let isEven = false;
-            for (let key in product) {
-                if (!key.startsWith('_') && key !== 'Gambar' && key !== 'Gambar 2' && key !== 'BARCODE') {
-                    const val = product[key] !== undefined && product[key] !== '' ? product[key] : '-';
-                    const row = document.createElement('div');
-                    row.className = `flex justify-between items-center py-2.5 px-3 border-b border-slate-700/50 ${isEven ? 'bg-slate-800/30' : ''} last:border-0`;
-                    
-                    const label = document.createElement('span');
-                    label.className = "text-xs text-appTextSec w-1/2 pr-2 font-medium break-words";
-                    label.innerText = key;
-                    
-                    const valueEl = document.createElement('div');
-                    valueEl.className = "text-sm text-white w-1/2 text-right font-semibold break-words flex flex-col items-end";
-                    
-                    if (key === 'Link to RR' && val !== '-') {
-                        const linkBtn = document.createElement('a');
-                        linkBtn.href = val;
-                        linkBtn.target = "_blank";
-                        linkBtn.className = "inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded mt-1 transition-colors w-max shadow-md";
-                        linkBtn.innerHTML = `Buka RR`;
-                        valueEl.appendChild(linkBtn);
-                        row.appendChild(label);
-                        row.appendChild(valueEl);
-                    } else {
-                        valueEl.innerHTML = `${val} <svg class="w-3 h-3 text-slate-500 ml-1 inline opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
-                        row.appendChild(label);
-                        row.appendChild(valueEl);
-                        
-                        row.classList.add('cursor-pointer', 'active:bg-slate-700', 'transition-colors');
-                        row.onclick = () => {
-                            copyToClipboard(val);
-                            showToast(`${key} disalin!`);
-                        };
-                    }
-                    dynContainer.appendChild(row);
-                    isEven = !isEven;
-                }
-            }
-
-            const barcodeContainer = document.getElementById('barcode-container');
-            const barcodeVal = product['BARCODE'];
-            const barcodeTextEl = document.getElementById('barcode-text');
-            
-            if (barcodeVal && barcodeVal.trim() !== '' && barcodeVal !== '-') {
-                barcodeContainer.classList.remove('hidden');
-                barcodeContainer.classList.add('flex');
-                barcodeTextEl.innerText = barcodeVal;
-                
-                barcodeContainer.onclick = () => {
-                    copyToClipboard(barcodeVal);
-                    showToast('Angka Barcode disalin!');
-                };
-
-                try {
-                    JsBarcode("#barcode-svg", barcodeVal, {
-                        format: "CODE128",
-                        lineColor: "#0F172A",
-                        width: 2,
-                        height: 60,
-                        displayValue: false,
-                        margin: 0
-                    });
-                } catch (e) {
-                    document.getElementById('barcode-svg').innerHTML = `<text x="10" y="20" fill="red" font-size="12">Invalid Barcode</text>`;
-                }
-            } else {
-                barcodeContainer.classList.add('hidden');
-                barcodeContainer.classList.remove('flex');
-            }
-
-            modal.classList.remove('hidden');
-            void modal.offsetWidth;
-            modal.classList.remove('opacity-0');
-            modalContent.classList.remove('translate-y-full');
+        function toggleStockFilter() {
+            showOnlyInStock = !showOnlyInStock;
+            filterData();
         }
 
-        function closeDetail() {
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('translate-y-full');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+        function setCategory(cat) {
+            currentCategory = cat;
+            filterData();
         }
 
-        function scanBarcode() {
-            alert("Gunakan kolom pencarian untuk mengetik angka/barcode.");
-            searchInput.focus();
+        function handleSearch() { currentPage = 1; filterData(); }
+        function changePage(d) { currentPage = Math.max(1, currentPage + d); renderList(); }
+
+        function openDetail(p) {
+            document.getElementById('detail-name').innerText = p['PRODUCT NAME'] || '-';
+            document.getElementById('detail-article').innerText = p['ARTICLE'] || '-';
+            document.getElementById('detail-modal').classList.remove('hidden');
         }
+        function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
     </script>
 </body>
 </html>
