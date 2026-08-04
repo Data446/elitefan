@@ -4,175 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ELITE FAN A446 JEMBER</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
-
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        appBg: '#0F172A',
-                        appCard: '#1E293B',
-                        appPrimary: '#DC2626',
-                        appHover: '#EF4444',
-                        appText: '#FFFFFF',
-                        appTextSec: '#CBD5E1'
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0F172A; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        .snap-x { scroll-snap-type: x mandatory; }
-        .snap-center { scroll-snap-align: center; }
-        .no-select { -webkit-user-select: none; user-select: none; }
-        @keyframes slideUpFade { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
-        .toast-animate { animation: slideUpFade 0.3s ease-out forwards; }
-        .resizer { position: absolute; top: 0; right: 0; width: 10px; cursor: col-resize; height: 100%; z-index: 25; transition: background-color 0.2s; }
-        .resizer:hover { background-color: rgba(220, 38, 38, 0.5); }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { white-space: nowrap; padding: 6px 10px; border: 1px solid #334155; font-size: 12px; }
+        th { background-color: #1E293B; position: sticky; top: 0; z-index: 10; color: #CBD5E1; }
+        .row-hover:hover { background-color: #334155; cursor: pointer; }
+        .cat-btn.active { background-color: #DC2626 !important; }
+        .img-cell { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-appBg text-appText font-sans overflow-hidden flex flex-col h-screen no-select">
+<body class="bg-slate-900 text-white font-sans overflow-hidden h-screen flex flex-col">
 
-    <header class="bg-appCard border-b border-slate-700 shadow-md sticky top-0 z-40">
-        <div class="px-4 py-3 flex items-center justify-between">
-            <h1 class="text-lg font-bold text-white">ELITE FAN <span class="text-appPrimary">A446</span></h1>
-            <button onclick="alert('Fitur scan perlu integrasi kamera.')" class="p-2 bg-slate-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg></button>
+    <!-- HEADER -->
+    <header class="bg-slate-950 p-3 shadow-lg z-20">
+        <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
+        <div class="flex gap-2 mb-2">
+            <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-slate-800 p-2 rounded text-sm border border-slate-700">
+            <button onclick="toggleColumnModal()" class="bg-slate-700 px-3 rounded text-xs border border-slate-600">Kolom</button>
         </div>
-        <div class="px-4 pb-3">
-            <input type="text" id="searchInput" class="w-full pl-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm" placeholder="Cari..." oninput="handleSearch()">
-            <div class="flex gap-2 mt-2 overflow-x-auto pb-1">
-                <button onclick="setCategory('ALL')" class="cat-btn px-4 py-1 rounded-full text-xs bg-appPrimary">Semua</button>
-                <button onclick="setCategory('FAN')" class="cat-btn px-4 py-1 rounded-full text-xs bg-slate-700">FAN</button>
-                <button id="btn-stock-filter" onclick="toggleStockFilter()" class="px-3 py-1 rounded-full text-xs bg-slate-700">Stok Tersedia</button>
-            </div>
+        <div class="flex gap-2 overflow-x-auto pb-1">
+            <button onclick="setCategory('ALL')" id="cat-ALL" class="cat-btn active bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Semua</button>
+            <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">FAN</button>
+            <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
+            <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
+            <button onclick="toggleStockFilter()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stok > 0</button>
         </div>
     </header>
 
-    <main class="flex-1 overflow-auto w-full relative">
-        <div id="product-list" class="w-max min-w-full"></div>
+    <!-- TABLE -->
+    <main class="flex-1 overflow-auto">
+        <table id="data-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+        </table>
     </main>
 
-    <div id="pagination-controls" class="p-2 bg-slate-800 flex justify-between items-center text-xs">
-        <button onclick="changePage(-1)" class="px-3 py-1 bg-slate-700 rounded">Prev</button>
-        <span id="page-info">1</span>
-        <button onclick="changePage(1)" class="px-3 py-1 bg-slate-700 rounded">Next</button>
+    <!-- COLUMN MODAL -->
+    <div id="col-modal" class="fixed inset-0 bg-black/80 hidden z-50 p-4">
+        <div class="bg-slate-800 p-4 rounded-lg w-full max-w-sm mx-auto">
+            <h3 class="font-bold mb-3">Tampilkan Kolom</h3>
+            <div id="col-list" class="grid grid-cols-2 gap-2 text-sm"></div>
+            <button onclick="toggleColumnModal()" class="w-full mt-4 bg-red-600 py-2 rounded">Tutup</button>
+        </div>
     </div>
 
     <!-- DETAIL MODAL -->
-    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/80 hidden flex flex-col justify-end">
-        <div id="detail-content" class="bg-appBg w-full h-[90vh] rounded-t-2xl p-4 overflow-y-auto">
-            <button onclick="closeDetail()" class="text-white mb-4">Tutup</button>
-            <h3 id="detail-name" class="text-xl font-bold mb-2 cursor-pointer" onclick="copyToClipboard(this.innerText)"></h3>
-            <p id="detail-article" class="text-appPrimary font-mono cursor-pointer" onclick="copyToClipboard(this.innerText)"></p>
-            <div id="dynamic-fields" class="mt-4 space-y-2"></div>
-            <div id="barcode-container" class="mt-8 bg-white p-4 rounded flex flex-col items-center">
+    <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-4 overflow-y-auto">
+        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto">
+            <button onclick="closeDetail()" class="text-red-500 mb-4 block">Tutup</button>
+            <h3 id="d-name" class="font-bold text-lg mb-2 cursor-pointer border-b border-slate-700 pb-2" onclick="copy(this.innerText)"></h3>
+            <div id="d-fields" class="space-y-1 text-sm"></div>
+            <div id="barcode-container" class="mt-6 flex flex-col items-center bg-white p-2 rounded">
                 <svg id="barcode-svg"></svg>
             </div>
         </div>
     </div>
 
     <script>
-        // --- DATA & STATE ---
         let allData = [];
-        let filteredProducts = [];
-        let currentPage = 1;
-        const ITEMS_PER_PAGE = 50;
-        let visibleColumns = [];
-        let showOnlyInStock = false;
+        let hiddenCols = new Set(['Gambar 2']);
         let currentCategory = 'ALL';
+        let showOnlyStock = false;
+        let debounceTimer;
 
-        // --- CORE FUNCTIONS ---
-        function formatNumber(numStr) {
-            if (!numStr || numStr === '-' || isNaN(numStr)) return numStr;
-            return parseInt(numStr).toLocaleString('id-ID');
-        }
+        // GANTI URL INI DENGAN URL DEPLOYMENT APPS SCRIPT ANDA
+        const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
-        function copyToClipboard(text) {
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            alert('Tersalin!');
-        }
-
-        // --- FETCH DATA ---
-        window.onload = () => {
-            const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec'; 
-            fetch(API)
-                .then(res => res.json())
-                .then(data => {
-                    let combined = [];
-                    for(let key in data) {
-                        data[key].forEach(r => { r['_Kategori'] = key; combined.push(r); });
-                    }
-                    allData = combined;
-                    visibleColumns = Object.keys(allData[0] || {}).filter(k => !k.startsWith('_'));
-                    filterData();
+        fetch(API).then(r => r.json()).then(data => {
+            let combined = [];
+            for(let key in data) {
+                data[key].forEach(r => { 
+                    r['_Kategori'] = key; 
+                    combined.push(r); 
                 });
-        }
+            }
+            allData = combined;
+            renderAll();
+        });
 
-        function filterData() {
+        document.getElementById('searchInput').oninput = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(renderAll, 300);
+        };
+
+        function renderAll() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            filteredProducts = allData.filter(p => {
+            const body = document.getElementById('table-body');
+            const head = document.getElementById('table-head');
+            body.innerHTML = '';
+            
+            const filtered = allData.filter(p => {
                 if(currentCategory !== 'ALL' && p['_Kategori'] !== currentCategory) return false;
-                if(showOnlyInStock && (parseInt(p['STOCK'] || 0) <= 0)) return false;
+                if(showOnlyStock && parseInt(p['STOCK'] || 0) <= 0) return false;
                 return JSON.stringify(p).toLowerCase().includes(query);
             });
-            renderList();
-        }
 
-        function renderList() {
-            const container = document.getElementById('product-list');
-            container.innerHTML = '';
+            if (filtered.length === 0) return;
+
+            const allKeys = Object.keys(filtered[0]).filter(k => !k.startsWith('_'));
+            let keys = ['Gambar', 'Gambar 2', ...allKeys.filter(k => k !== 'Gambar' && k !== 'Gambar 2')];
             
-            const start = (currentPage - 1) * ITEMS_PER_PAGE;
-            const pageData = filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-
-            let html = `<table class="w-full text-left text-xs border-collapse"><thead><tr class="bg-slate-800">`;
-            html += `<th class="p-2 border">Gbr 1</th><th class="p-2 border">Gbr 2</th>`;
-            visibleColumns.forEach(c => html += `<th class="p-2 border">${c}</th>`);
-            html += `</tr></thead><tbody>`;
-
-            pageData.forEach(p => {
-                html += `<tr class="border-b hover:bg-slate-700 cursor-pointer" onclick='openDetail(${JSON.stringify(p).replace(/'/g, "&apos;")})'>`;
-                html += `<td class="p-2 border">${p['Gambar'] ? 'IMG' : '-'}</td><td class="p-2 border">${p['Gambar 2'] ? 'IMG' : '-'}</td>`;
-                visibleColumns.forEach(c => html += `<td class="p-2 border">${p[c] || '-'}</td>`);
-                html += `</tr>`;
+            head.innerHTML = `<tr>${keys.map(k => hiddenCols.has(k) ? '' : `<th class="text-left">${k}</th>`).join('')}</tr>`;
+            
+            filtered.slice(0, 100).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'row-hover';
+                tr.onclick = () => openDetail(p);
+                tr.innerHTML = keys.map(k => {
+                    if (hiddenCols.has(k)) return '';
+                    let val = p[k] || '-';
+                    if (k === 'Gambar' || k === 'Gambar 2') {
+                        return `<td><img src="${val}" class="img-cell" onerror="this.src='https://placehold.co/40x40/334155/white?text=No+Img'"></td>`;
+                    }
+                    return `<td class="text-xs">${val}</td>`;
+                }).join('');
+                body.appendChild(tr);
             });
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-        }
-
-        function toggleStockFilter() {
-            showOnlyInStock = !showOnlyInStock;
-            filterData();
         }
 
         function setCategory(cat) {
             currentCategory = cat;
-            filterData();
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('cat-' + cat).classList.add('active');
+            renderAll();
         }
 
-        function handleSearch() { currentPage = 1; filterData(); }
-        function changePage(d) { currentPage = Math.max(1, currentPage + d); renderList(); }
+        function toggleStockFilter() {
+            showOnlyStock = !showOnlyStock;
+            document.getElementById('stockBtn').classList.toggle('bg-red-600', showOnlyStock);
+            renderAll();
+        }
+
+        function toggleColumnModal() {
+            if (!allData || allData.length === 0) return; 
+            const modal = document.getElementById('col-modal');
+            modal.classList.toggle('hidden');
+            if(!modal.classList.contains('hidden')) {
+                const list = document.getElementById('col-list');
+                list.innerHTML = '';
+                const allKeys = Object.keys(allData[0]).filter(k => !k.startsWith('_'));
+                allKeys.forEach(k => {
+                    list.innerHTML += `<label class="flex items-center gap-2"><input type="checkbox" ${!hiddenCols.has(k) ? 'checked' : ''} onchange="toggleCol('${k}')"> ${k}</label>`;
+                });
+            }
+        }
+
+        function toggleCol(k) {
+            if(hiddenCols.has(k)) hiddenCols.delete(k); else hiddenCols.add(k);
+            renderAll();
+        }
 
         function openDetail(p) {
-            document.getElementById('detail-name').innerText = p['PRODUCT NAME'] || '-';
-            document.getElementById('detail-article').innerText = p['ARTICLE'] || '-';
+            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || '-';
+            const fields = document.getElementById('d-fields');
+            fields.innerHTML = '';
+            for(let k in p) {
+                if(!k.startsWith('_')) {
+                    fields.innerHTML += `<p class="border-b border-slate-700 py-1" onclick="copy('${p[k]}')"><strong>${k}:</strong> ${p[k]}</p>`;
+                }
+            }
             document.getElementById('detail-modal').classList.remove('hidden');
+            JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40, fontSize: 14 });
         }
         function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
+        function copy(t) { 
+            navigator.clipboard.writeText(t).then(() => console.log('Copied: ' + t));
+        }
     </script>
 </body>
 </html>
