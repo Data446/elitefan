@@ -8,19 +8,23 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <style>
         body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
-        .table-container { overflow-x: auto; height: calc(100vh - 180px); }
-        table { border-collapse: collapse; width: 100%; border: 1px solid #334155; }
-        th, td { border: 1px solid #334155; padding: 6px 10px; font-size: 12px; white-space: nowrap; }
-        th { background-color: #1E293B; position: sticky; top: 0; z-index: 10; }
+        .table-container { overflow-x: auto; height: calc(100vh - 200px); }
+        table { border-collapse: collapse; width: 100%; border: 1px solid #334155; table-layout: fixed; }
+        th, td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+        th { background-color: #1E293B; }
+        .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; height: 100%; user-select: none; }
+        .resizer:hover { background: #64748b; }
         .row-hover:hover { background-color: #334155; cursor: pointer; }
-        .img-cell { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
         .active-btn { background-color: #DC2626 !important; }
-        #loading-overlay { position: fixed; inset: 0; background: #0F172A; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .hidden-col { display: none !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
-    <div id="loading-overlay">Memuat data dari Google Sheets...</div>
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
+        <p>Memuat Data...</p>
+    </div>
 
     <header class="bg-slate-950 p-3 shadow-lg z-20">
         <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
@@ -32,7 +36,9 @@
             <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
             <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
             <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stock A446 > 0</button>
+            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Kolom</button>
         </div>
+        <div id="col-menu" class="hidden bg-slate-800 p-2 rounded mt-2 flex flex-wrap gap-2 text-xs"></div>
     </header>
 
     <main class="flex-1 overflow-auto table-container">
@@ -42,33 +48,25 @@
         </table>
     </main>
 
-    <!-- PAGINATION -->
     <div class="bg-slate-900 p-2 flex justify-between items-center text-xs">
         <button onclick="changePage(-1)" class="bg-slate-700 px-4 py-1 rounded">Prev</button>
         <span id="page-info">Hal 1</span>
         <button onclick="changePage(1)" class="bg-slate-700 px-4 py-1 rounded">Next</button>
     </div>
 
-    <!-- DETAIL MODAL -->
     <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-2 overflow-y-auto">
         <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative">
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-xs font-bold text-slate-400">ELITE FAN A446 JEMBER</h1>
-                <button onclick="closeDetail()" class="text-red-500 font-bold">TUTUP [X]</button>
+                <button onclick="closeDetail()" class="text-red-500 font-bold text-xl">X</button>
             </div>
-            
-            <!-- Navigation -->
             <div class="flex justify-between mb-4">
                 <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold"><</button>
                 <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold">></button>
             </div>
-
-            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2 cursor-pointer" onclick="copy(this.innerText)"></h3>
-            
+            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2"></h3>
             <div id="d-images" class="flex gap-2 overflow-x-auto mb-4"></div>
-            
             <div id="d-fields" class="space-y-1 text-sm"></div>
-            
             <div id="barcode-container" class="mt-6 flex flex-col items-center bg-white p-2 rounded">
                 <svg id="barcode-svg"></svg>
             </div>
@@ -76,126 +74,107 @@
     </div>
 
     <script>
-        let allData = {};
-        let currentCategory = 'FAN';
-        let showOnlyStock = false;
-        let currentPage = 1;
-        let pageSize = 50;
-        let filteredList = [];
+        let allData = {}, currentCategory = 'FAN', showOnlyStock = false, currentPage = 1, pageSize = 50, filteredList = [];
+        let hiddenColumns = new Set();
         const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
-        fetch(API)
-            .then(r => r.json())
-            .then(data => {
-                allData = data;
-                document.getElementById('loading-overlay').style.display = 'none';
-                renderAll();
-            })
-            .catch(e => document.getElementById('loading-overlay').innerText = "Gagal memuat.");
+        window.onload = () => {
+            fetch(API)
+                .then(r => r.json())
+                .then(data => { allData = data; renderAll(); document.getElementById('loading-overlay').style.display = 'none'; })
+                .catch(e => { document.getElementById('loading-overlay').innerHTML = "Gagal memuat API."; });
+            document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderAll(); });
+        };
 
         function renderAll() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
             const rawData = allData[currentCategory] || [];
-            
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             filteredList = rawData.filter(p => {
-                if(showOnlyStock && parseInt(p['Stock A446'] || 0) <= 0) return false;
-                return JSON.stringify(p).toLowerCase().includes(query);
+                const matchesSearch = Object.values(p).some(val => String(val).toLowerCase().includes(searchQuery));
+                const matchesStock = !showOnlyStock || parseInt(p['Stock A446'] || 0) > 0;
+                return matchesSearch && matchesStock;
             });
 
-            const body = document.getElementById('table-body');
-            const head = document.getElementById('table-head');
-            body.innerHTML = '';
-            
+            const body = document.getElementById('table-body'), head = document.getElementById('table-head');
+            body.innerHTML = ''; head.innerHTML = '';
             if (filteredList.length === 0) return;
 
-            const allKeys = Object.keys(filteredList[0]);
-            let keys = ['Gambar', 'Gambar 2', ...allKeys.filter(k => k !== 'Gambar' && k !== 'Gambar 2')];
-            
-            head.innerHTML = `<tr>${keys.map(k => `<th class="text-left">${k}</th>`).join('')}</tr>`;
-            
-            const start = (currentPage - 1) * pageSize;
-            const pageData = filteredList.slice(start, start + pageSize);
+            let allKeys = Object.keys(filteredList[0]);
+            allKeys.sort((a, b) => {
+                const isImgA = a.toLowerCase().includes('gambar');
+                const isImgB = b.toLowerCase().includes('gambar');
+                if (isImgA && !isImgB) return -1;
+                if (!isImgA && isImgB) return 1;
+                return 0;
+            });
 
-            pageData.forEach((p, idx) => {
+            head.innerHTML = `<tr>${allKeys.map((k, i) => `<th class="w-32" onmousedown="startResizing(event, ${i})">${k}<div class="resizer"></div></th>`).join('')}</tr>`;
+            
+            filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize).forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = 'row-hover';
-                tr.onclick = () => openDetail(start + idx);
-                tr.innerHTML = keys.map(k => {
-                    let val = p[k] || '-';
-                    if (k === 'Gambar' || k === 'Gambar 2') {
-                        return `<td><img src="${val}" class="img-cell" onerror="this.src='https://placehold.co/40x40/334155/white?text=-'"></td>`;
-                    }
-                    return `<td class="text-xs">${val}</td>`;
-                }).join('');
+                tr.onclick = () => openDetail((currentPage - 1) * pageSize + idx);
+                tr.innerHTML = allKeys.map(k => `<td>${(k.toLowerCase().includes('gambar') && p[k]) ? `<img src="${p[k]}" class="w-10 h-10 object-cover rounded">` : (p[k] || '-')}</td>`).join('');
                 body.appendChild(tr);
             });
-            document.getElementById('page-info').innerText = `Hal ${currentPage} / ${Math.ceil(filteredList.length / pageSize)}`;
-        }
-
-        function setCategory(cat) {
-            currentCategory = cat;
-            currentPage = 1;
-            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active-btn'));
-            document.getElementById('cat-' + cat).classList.add('active-btn');
-            renderAll();
-        }
-
-        function toggleStock() {
-            showOnlyStock = !showOnlyStock;
-            document.getElementById('stockBtn').classList.toggle('active-btn', showOnlyStock);
-            currentPage = 1;
-            renderAll();
-        }
-
-        function changePage(delta) {
-            const max = Math.ceil(filteredList.length / pageSize);
-            currentPage = Math.max(1, Math.min(max, currentPage + delta));
-            renderAll();
-        }
-
-        let currentDetailIdx = 0;
-        function openDetail(index) {
-            currentDetailIdx = index;
-            const p = filteredList[index];
-            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || 'Detail Produk';
+            document.getElementById('page-info').innerText = `Hal ${currentPage} / ${Math.ceil(filteredList.length / pageSize) || 1}`;
             
-            const imgContainer = document.getElementById('d-images');
-            imgContainer.innerHTML = '';
-            ['Gambar', 'Gambar 2'].forEach(k => {
-                if(p[k]) imgContainer.innerHTML += `<img src="${p[k]}" class="w-24 h-24 object-cover rounded">`;
-            });
+            renderColMenu(allKeys);
+            applyHiddenColumns();
+        }
 
+        function renderColMenu(keys) {
+            const menu = document.getElementById('col-menu');
+            menu.innerHTML = keys.map((k, i) => `<label class="flex items-center gap-1"><input type="checkbox" ${!hiddenColumns.has(i) ? 'checked' : ''} onchange="toggleCol(${i}, this.checked)"> ${k}</label>`).join('');
+        }
+
+        function toggleCol(idx, show) {
+            if (show) hiddenColumns.delete(idx); else hiddenColumns.add(idx);
+            applyHiddenColumns();
+        }
+
+        function applyHiddenColumns() {
+            hiddenColumns.forEach(idx => {
+                document.querySelectorAll(`th:nth-child(${idx+1}), td:nth-child(${idx+1})`).forEach(el => el.classList.add('hidden-col'));
+            });
+        }
+
+        function startResizing(e, idx) {
+            let currentTh = e.target.parentElement;
+            let startX = e.pageX;
+            let startWidth = currentTh.offsetWidth;
+            const resizing = (e) => currentTh.style.width = (startWidth + (e.pageX - startX)) + 'px';
+            const stopResizing = () => { document.removeEventListener('mousemove', resizing); document.removeEventListener('mouseup', stopResizing); };
+            document.addEventListener('mousemove', resizing);
+            document.addEventListener('mouseup', stopResizing);
+        }
+
+        function openDetail(idx) {
+            const p = filteredList[idx];
+            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || 'Detail Produk';
+            document.getElementById('d-images').innerHTML = Object.keys(p).filter(k => k.toLowerCase().includes('gambar')).map(k => p[k] ? `<img src="${p[k]}" class="w-24 h-24 object-cover rounded">` : '').join('');
             const fields = document.getElementById('d-fields');
-            fields.innerHTML = '';
-            for(let k in p) {
-                if(k === 'Link to RR') {
-                    fields.innerHTML += `<div class="py-2"><a href="${p[k]}" target="_blank" class="block w-full bg-red-600 text-center py-2 rounded font-bold">Buka RR</a></div>`;
-                } else if (!k.startsWith('_') && k !== 'Gambar' && k !== 'Gambar 2') {
-                    fields.innerHTML += `<p class="border-b border-slate-700 py-1" onclick="copy('${p[k]}')"><strong>${k}:</strong> ${p[k]}</p>`;
-                }
-            }
+            fields.innerHTML = Object.keys(p).filter(k => !k.startsWith('_')).map(k => {
+                if(k === 'Link to RR') return `<a href="${p[k]}" target="_blank" class="block bg-red-600 text-center py-2 rounded text-white font-bold my-2">Buka Link RR</a>`;
+                return `<div class="border-b border-slate-700 py-1" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
+            }).join('');
             document.getElementById('detail-modal').classList.remove('hidden');
             try { JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40 }); } catch(e){}
+            window.currentIdx = idx;
         }
 
-        function navigate(d) {
-            let next = currentDetailIdx + d;
-            if(next >= 0 && next < filteredList.length) openDetail(next);
+        function copyText(t) {
+            const el = document.createElement("textarea"); el.value = t; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el);
+            alert('Teks disalin: ' + t);
         }
 
+        function navigate(d) { if(filteredList[window.currentIdx + d]) openDetail(window.currentIdx + d); }
         function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
-
-        function copy(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert("Tersalin: " + text);
-        }
-
-        document.getElementById('searchInput').oninput = () => { currentPage = 1; renderAll(); };
+        function setCategory(cat) { currentCategory = cat; currentPage = 1; renderAll(); document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active-btn', b.id === 'cat-'+cat)); }
+        function toggleStock() { showOnlyStock = !showOnlyStock; currentPage = 1; renderAll(); document.getElementById('stockBtn').classList.toggle('active-btn', showOnlyStock); }
+        function changePage(d) { currentPage = Math.max(1, Math.min(Math.ceil(filteredList.length/pageSize), currentPage + d)); renderAll(); }
+        function toggleColMenu() { document.getElementById('col-menu').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
