@@ -2,63 +2,73 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELITE FAN A446 JEMBER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0F172A; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { white-space: nowrap; padding: 6px 10px; border: 1px solid #334155; font-size: 12px; }
-        th { background-color: #1E293B; position: sticky; top: 0; z-index: 10; color: #CBD5E1; }
+        body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
+        .table-container { overflow-x: auto; height: calc(100vh - 180px); }
+        table { border-collapse: collapse; width: 100%; border: 1px solid #334155; }
+        th, td { border: 1px solid #334155; padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+        th { background-color: #1E293B; position: sticky; top: 0; z-index: 10; }
         .row-hover:hover { background-color: #334155; cursor: pointer; }
-        .cat-btn.active { background-color: #DC2626 !important; }
         .img-cell { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+        .active-btn { background-color: #DC2626 !important; }
+        #loading-overlay { position: fixed; inset: 0; background: #0F172A; display: flex; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
-<body class="bg-slate-900 text-white font-sans overflow-hidden h-screen flex flex-col">
+<body class="h-screen flex flex-col">
 
-    <!-- HEADER -->
+    <div id="loading-overlay">Memuat data dari Google Sheets...</div>
+
     <header class="bg-slate-950 p-3 shadow-lg z-20">
         <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
         <div class="flex gap-2 mb-2">
             <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-slate-800 p-2 rounded text-sm border border-slate-700">
-            <button onclick="toggleColumnModal()" class="bg-slate-700 px-3 rounded text-xs border border-slate-600">Kolom</button>
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1">
-            <button onclick="setCategory('ALL')" id="cat-ALL" class="cat-btn active bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Semua</button>
-            <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">FAN</button>
+        <div class="flex gap-2 overflow-x-auto pb-1" id="cat-btns">
+            <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap active-btn">FAN</button>
             <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
             <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
-            <button onclick="toggleStockFilter()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stok > 0</button>
+            <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stock A446 > 0</button>
         </div>
     </header>
 
-    <!-- TABLE -->
-    <main class="flex-1 overflow-auto">
+    <main class="flex-1 overflow-auto table-container">
         <table id="data-table">
             <thead id="table-head"></thead>
             <tbody id="table-body"></tbody>
         </table>
     </main>
 
-    <!-- COLUMN MODAL -->
-    <div id="col-modal" class="fixed inset-0 bg-black/80 hidden z-50 p-4">
-        <div class="bg-slate-800 p-4 rounded-lg w-full max-w-sm mx-auto">
-            <h3 class="font-bold mb-3">Tampilkan Kolom</h3>
-            <div id="col-list" class="grid grid-cols-2 gap-2 text-sm"></div>
-            <button onclick="toggleColumnModal()" class="w-full mt-4 bg-red-600 py-2 rounded">Tutup</button>
-        </div>
+    <!-- PAGINATION -->
+    <div class="bg-slate-900 p-2 flex justify-between items-center text-xs">
+        <button onclick="changePage(-1)" class="bg-slate-700 px-4 py-1 rounded">Prev</button>
+        <span id="page-info">Hal 1</span>
+        <button onclick="changePage(1)" class="bg-slate-700 px-4 py-1 rounded">Next</button>
     </div>
 
     <!-- DETAIL MODAL -->
-    <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-4 overflow-y-auto">
-        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto">
-            <button onclick="closeDetail()" class="text-red-500 mb-4 block">Tutup</button>
-            <h3 id="d-name" class="font-bold text-lg mb-2 cursor-pointer border-b border-slate-700 pb-2" onclick="copy(this.innerText)"></h3>
+    <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-2 overflow-y-auto">
+        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xs font-bold text-slate-400">ELITE FAN A446 JEMBER</h1>
+                <button onclick="closeDetail()" class="text-red-500 font-bold">TUTUP [X]</button>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="flex justify-between mb-4">
+                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold"><</button>
+                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold">></button>
+            </div>
+
+            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2 cursor-pointer" onclick="copy(this.innerText)"></h3>
+            
+            <div id="d-images" class="flex gap-2 overflow-x-auto mb-4"></div>
+            
             <div id="d-fields" class="space-y-1 text-sm"></div>
+            
             <div id="barcode-container" class="mt-6 flex flex-col items-center bg-white p-2 rounded">
                 <svg id="barcode-svg"></svg>
             </div>
@@ -66,115 +76,126 @@
     </div>
 
     <script>
-        let allData = [];
-        let hiddenCols = new Set(['Gambar 2']);
-        let currentCategory = 'ALL';
+        let allData = {};
+        let currentCategory = 'FAN';
         let showOnlyStock = false;
-        let debounceTimer;
-
-        // GANTI URL INI DENGAN URL DEPLOYMENT APPS SCRIPT ANDA
+        let currentPage = 1;
+        let pageSize = 50;
+        let filteredList = [];
         const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
-        fetch(API).then(r => r.json()).then(data => {
-            let combined = [];
-            for(let key in data) {
-                data[key].forEach(r => { 
-                    r['_Kategori'] = key; 
-                    combined.push(r); 
-                });
-            }
-            allData = combined;
-            renderAll();
-        });
-
-        document.getElementById('searchInput').oninput = () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(renderAll, 300);
-        };
+        fetch(API)
+            .then(r => r.json())
+            .then(data => {
+                allData = data;
+                document.getElementById('loading-overlay').style.display = 'none';
+                renderAll();
+            })
+            .catch(e => document.getElementById('loading-overlay').innerText = "Gagal memuat.");
 
         function renderAll() {
             const query = document.getElementById('searchInput').value.toLowerCase();
+            const rawData = allData[currentCategory] || [];
+            
+            filteredList = rawData.filter(p => {
+                if(showOnlyStock && parseInt(p['Stock A446'] || 0) <= 0) return false;
+                return JSON.stringify(p).toLowerCase().includes(query);
+            });
+
             const body = document.getElementById('table-body');
             const head = document.getElementById('table-head');
             body.innerHTML = '';
             
-            const filtered = allData.filter(p => {
-                if(currentCategory !== 'ALL' && p['_Kategori'] !== currentCategory) return false;
-                if(showOnlyStock && parseInt(p['STOCK'] || 0) <= 0) return false;
-                return JSON.stringify(p).toLowerCase().includes(query);
-            });
+            if (filteredList.length === 0) return;
 
-            if (filtered.length === 0) return;
-
-            const allKeys = Object.keys(filtered[0]).filter(k => !k.startsWith('_'));
+            const allKeys = Object.keys(filteredList[0]);
             let keys = ['Gambar', 'Gambar 2', ...allKeys.filter(k => k !== 'Gambar' && k !== 'Gambar 2')];
             
-            head.innerHTML = `<tr>${keys.map(k => hiddenCols.has(k) ? '' : `<th class="text-left">${k}</th>`).join('')}</tr>`;
+            head.innerHTML = `<tr>${keys.map(k => `<th class="text-left">${k}</th>`).join('')}</tr>`;
             
-            filtered.slice(0, 100).forEach(p => {
+            const start = (currentPage - 1) * pageSize;
+            const pageData = filteredList.slice(start, start + pageSize);
+
+            pageData.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = 'row-hover';
-                tr.onclick = () => openDetail(p);
+                tr.onclick = () => openDetail(start + idx);
                 tr.innerHTML = keys.map(k => {
-                    if (hiddenCols.has(k)) return '';
                     let val = p[k] || '-';
                     if (k === 'Gambar' || k === 'Gambar 2') {
-                        return `<td><img src="${val}" class="img-cell" onerror="this.src='https://placehold.co/40x40/334155/white?text=No+Img'"></td>`;
+                        return `<td><img src="${val}" class="img-cell" onerror="this.src='https://placehold.co/40x40/334155/white?text=-'"></td>`;
                     }
                     return `<td class="text-xs">${val}</td>`;
                 }).join('');
                 body.appendChild(tr);
             });
+            document.getElementById('page-info').innerText = `Hal ${currentPage} / ${Math.ceil(filteredList.length / pageSize)}`;
         }
 
         function setCategory(cat) {
             currentCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('cat-' + cat).classList.add('active');
+            currentPage = 1;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active-btn'));
+            document.getElementById('cat-' + cat).classList.add('active-btn');
             renderAll();
         }
 
-        function toggleStockFilter() {
+        function toggleStock() {
             showOnlyStock = !showOnlyStock;
-            document.getElementById('stockBtn').classList.toggle('bg-red-600', showOnlyStock);
+            document.getElementById('stockBtn').classList.toggle('active-btn', showOnlyStock);
+            currentPage = 1;
             renderAll();
         }
 
-        function toggleColumnModal() {
-            if (!allData || allData.length === 0) return; 
-            const modal = document.getElementById('col-modal');
-            modal.classList.toggle('hidden');
-            if(!modal.classList.contains('hidden')) {
-                const list = document.getElementById('col-list');
-                list.innerHTML = '';
-                const allKeys = Object.keys(allData[0]).filter(k => !k.startsWith('_'));
-                allKeys.forEach(k => {
-                    list.innerHTML += `<label class="flex items-center gap-2"><input type="checkbox" ${!hiddenCols.has(k) ? 'checked' : ''} onchange="toggleCol('${k}')"> ${k}</label>`;
-                });
-            }
-        }
-
-        function toggleCol(k) {
-            if(hiddenCols.has(k)) hiddenCols.delete(k); else hiddenCols.add(k);
+        function changePage(delta) {
+            const max = Math.ceil(filteredList.length / pageSize);
+            currentPage = Math.max(1, Math.min(max, currentPage + delta));
             renderAll();
         }
 
-        function openDetail(p) {
-            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || '-';
+        let currentDetailIdx = 0;
+        function openDetail(index) {
+            currentDetailIdx = index;
+            const p = filteredList[index];
+            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || 'Detail Produk';
+            
+            const imgContainer = document.getElementById('d-images');
+            imgContainer.innerHTML = '';
+            ['Gambar', 'Gambar 2'].forEach(k => {
+                if(p[k]) imgContainer.innerHTML += `<img src="${p[k]}" class="w-24 h-24 object-cover rounded">`;
+            });
+
             const fields = document.getElementById('d-fields');
             fields.innerHTML = '';
             for(let k in p) {
-                if(!k.startsWith('_')) {
+                if(k === 'Link to RR') {
+                    fields.innerHTML += `<div class="py-2"><a href="${p[k]}" target="_blank" class="block w-full bg-red-600 text-center py-2 rounded font-bold">Buka RR</a></div>`;
+                } else if (!k.startsWith('_') && k !== 'Gambar' && k !== 'Gambar 2') {
                     fields.innerHTML += `<p class="border-b border-slate-700 py-1" onclick="copy('${p[k]}')"><strong>${k}:</strong> ${p[k]}</p>`;
                 }
             }
             document.getElementById('detail-modal').classList.remove('hidden');
-            JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40, fontSize: 14 });
+            try { JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40 }); } catch(e){}
         }
+
+        function navigate(d) {
+            let next = currentDetailIdx + d;
+            if(next >= 0 && next < filteredList.length) openDetail(next);
+        }
+
         function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
-        function copy(t) { 
-            navigator.clipboard.writeText(t).then(() => console.log('Copied: ' + t));
+
+        function copy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert("Tersalin: " + text);
         }
+
+        document.getElementById('searchInput').oninput = () => { currentPage = 1; renderAll(); };
     </script>
 </body>
 </html>
