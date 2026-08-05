@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELITE FAN A446 JEMBER</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
@@ -40,7 +40,7 @@
             <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
             <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
             <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stock A446 > 0</button>
-            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Kolom</button>
+            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Filter Kolom</button>
         </div>
         <div id="col-menu" class="hidden bg-slate-800 p-2 rounded mt-2 flex flex-wrap gap-2 text-xs"></div>
     </header>
@@ -62,17 +62,17 @@
         <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative">
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-xs font-bold text-slate-400">ELITE FAN A446 JEMBER</h1>
-                <button onclick="closeDetail()" class="text-red-500 font-bold text-xl">X</button>
+                <button onclick="closeDetail()" class="text-red-500 font-bold text-sm">( Tutup )</button>
             </div>
             <div class="flex justify-between mb-4">
-                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold">&lt;</button>
-                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold">&gt;</button>
+                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm">( &lt; Prev )</button>
+                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm">( Next &gt; )</button>
             </div>
             <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2"></h3>
             <div id="d-images" class="flex gap-2 overflow-x-auto mb-4"></div>
             <div id="d-fields" class="space-y-1 text-sm"></div>
             <div id="barcode-container" class="mt-6 flex flex-col items-center bg-white p-2 rounded">
-                <svg id="barcode-svg"></svg>
+                <canvas id="qrcode-canvas"></canvas>
             </div>
         </div>
     </div>
@@ -99,7 +99,7 @@
             fetch(API)
                 .then(r => r.json())
                 .then(data => { allData = data; renderAll(); document.getElementById('loading-overlay').style.display = 'none'; })
-                .catch(e => { document.getElementById('loading-overlay').innerHTML = "Gagal memuat API."; });
+                .catch(e => { document.getElementById('loading-overlay').innerHTML = "Gagal memuat API. Refres ulang.."; });
             
             document.getElementById('searchInput').addEventListener('input', () => {
                 clearTimeout(searchTimeout);
@@ -192,14 +192,20 @@
             const fields = document.getElementById('d-fields');
             fields.innerHTML = Object.keys(p).filter(k => !k.startsWith('_')).map(k => {
                 if(k === 'Link to RR') return `<a href="${p[k]}" target="_blank" class="block bg-red-600 text-center py-2 rounded text-white font-bold my-2 shadow">Buka Link RR</a>`;
-                return `<div class="border-b border-slate-700 py-1 px-1 rounded hover:bg-slate-800 cursor-pointer" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
-            }).join('');
-            document.getElementById('detail-modal').classList.remove('hidden');
-            try { JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40 }); } catch(e){}
-            window.currentIdx = idx;
-        }
+            return `<div class="border-b border-slate-700 py-1 px-1 rounded hover:bg-slate-800 cursor-pointer" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
+        }).join('');
+        document.getElementById('detail-modal').classList.remove('hidden');
+        try { 
+            new QRious({
+                element: document.getElementById('qrcode-canvas'),
+                value: p['BARCODE'] || p['PRODUCT NAME'] || '000',
+                size: 150
+            }); 
+        } catch(e){}
+        window.currentIdx = idx;
+    }
 
-        function copyText(t) {
+    function copyText(t) {
             const el = document.createElement("textarea"); el.value = t; document.body.appendChild(el); el.select();
             document.execCommand('copy'); document.body.removeChild(el);
             showToast('Teks disalin: ' + t);
