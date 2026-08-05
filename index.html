@@ -9,95 +9,184 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
-        body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
-        .table-container { overflow-x: auto; height: calc(100vh - 210px); }
-        table { border-collapse: collapse; width: 100%; border: 1px solid #334155; table-layout: fixed; }
-        th { background-color: #1E293B; border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 -1px 0 #334155; user-select: none; }
-        td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
-        .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; height: 100%; user-select: none; z-index: 20; }
-        .resizer:hover { background: #64748b; }
-        .row-hover:hover { background-color: #334155; cursor: pointer; }
-        .active-btn { background-color: #DC2626 !important; border-color: #B91C1C !important; color: white !important;}
-        .hidden-col { display: none !important; }
+        body { 
+            background-color: #0F172A; 
+            color: #FFFFFF; 
+            font-family: system-ui, -apple-system, sans-serif; 
+        }
         
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #1E293B; border-radius: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        .table-container { 
+            overflow: auto; 
+            height: calc(100vh - 180px); 
+            position: relative;
+        }
+        
+        table { 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            width: 100%; 
+            table-layout: fixed; 
+        }
+        
+        /* Sticky Freeze Header Fix */
+        th { 
+            background-color: #1E293B !important; 
+            color: #F8FAFC;
+            border-bottom: 2px solid #475569; 
+            border-right: 1px solid #334155; 
+            padding: 8px; 
+            font-size: 12px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            position: sticky; 
+            top: 0; 
+            z-index: 30; 
+            user-select: none; 
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+        }
+        
+        td { 
+            border-bottom: 1px solid #334155; 
+            border-right: 1px solid #334155; 
+            padding: 6px 8px; 
+            font-size: 12px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            position: relative; 
+            background-color: #0F172A;
+        }
+        
+        .resizer { 
+            position: absolute; 
+            top: 0; 
+            right: 0; 
+            width: 6px; 
+            cursor: col-resize; 
+            height: 100%; 
+            user-select: none; 
+            z-index: 35; 
+        }
+        
+        .resizer:hover { 
+            background: #EF4444; 
+        }
+        
+        .row-hover:hover td { 
+            background-color: #1E293B !important; 
+            cursor: pointer; 
+        }
+        
+        .active-btn { 
+            background-color: #DC2626 !important; 
+            border-color: #B91C1C !important; 
+            color: white !important;
+        }
+        
+        .hidden-col { 
+            display: none !important; 
+        }
+        
+        .custom-scroll::-webkit-scrollbar { 
+            width: 6px; 
+            height: 6px; 
+        }
+        
+        .custom-scroll::-webkit-scrollbar-track { 
+            background: #1E293B; 
+            border-radius: 8px; 
+        }
+        
+        .custom-scroll::-webkit-scrollbar-thumb { 
+            background: #475569; 
+            border-radius: 10px; 
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
-        <p>Memuat Data...</p>
+        <p class="text-sm text-slate-300">Memuat Data...</p>
     </div>
 
-    <header class="bg-slate-950 p-3 shadow-lg z-20 relative">
+    <header class="bg-slate-950 p-3 shadow-lg z-20 relative border-b border-slate-800">
         <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
+        
+        <!-- Search & Scan Row -->
         <div class="flex gap-2 mb-2">
             <div class="relative w-full flex items-center bg-slate-800 rounded border border-slate-700 overflow-hidden">
-                <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-transparent p-2 pr-8 text-sm outline-none">
+                <input type="text" id="searchInput" placeholder="Cari produk..." class="w-full bg-transparent p-2 pr-8 text-sm outline-none text-white placeholder-slate-400">
                 <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-2 text-slate-400 hover:text-white hidden font-bold text-lg leading-none" title="Hapus Pencarian">&times;</button>
             </div>
-            <button onclick="openScanner()" class="bg-red-600 px-3 py-2 rounded text-xs font-bold flex items-center justify-center shrink-0" title="Scan Barcode">
+            <button onclick="openScanner()" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-xs font-bold flex items-center justify-center shrink-0 text-white transition-colors" title="Scan Barcode">
                 📷 Scan
             </button>
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 items-center relative" id="cat-btns">
-            <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap active-btn">FAN</button>
-            <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
-            <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
-            <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stock A446 > 0</button>
-            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600 transition-colors">Filter Kolom</button>
+        
+        <!-- Categories & Actions Row -->
+        <div class="flex gap-2 overflow-x-auto pb-1 items-center relative custom-scroll" id="cat-btns">
+            <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1.5 rounded text-xs whitespace-nowrap active-btn font-medium">FAN</button>
+            <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1.5 rounded text-xs whitespace-nowrap font-medium">Electrical</button>
+            <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1.5 rounded text-xs whitespace-nowrap font-medium">LIGHTING</button>
+            <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1.5 rounded text-xs whitespace-nowrap border border-slate-600 font-medium">Stock A446 > 0</button>
+            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1.5 rounded text-xs whitespace-nowrap border border-slate-600 transition-colors font-medium">Filter Kolom</button>
         </div>
         
-        <div id="col-menu" class="hidden absolute right-4 top-full mt-2 bg-slate-800 p-3 rounded-lg shadow-2xl border border-slate-600 flex-col gap-2 text-xs z-50 max-h-64 overflow-y-auto min-w-[200px] custom-scroll">
+        <!-- Dropdown Column Filter List Card -->
+        <div id="col-menu" class="hidden absolute right-4 top-full mt-2 bg-slate-800 p-3 rounded-lg shadow-2xl border border-slate-600 flex-col gap-1 text-xs z-50 max-h-72 overflow-y-auto min-w-[220px] custom-scroll">
         </div>
     </header>
 
-    <main class="flex-1 overflow-auto table-container" id="main-container">
+    <main class="flex-1 overflow-auto table-container custom-scroll" id="main-container">
         <table id="data-table">
             <thead id="table-head"></thead>
             <tbody id="table-body"></tbody>
         </table>
     </main>
 
-    <div class="bg-slate-900 p-2 flex justify-between items-center text-xs">
-        <button onclick="changePage(-1)" class="bg-slate-700 px-4 py-1 rounded shadow">Prev</button>
-        <span id="page-info">Hal 1</span>
-        <button onclick="changePage(1)" class="bg-slate-700 px-4 py-1 rounded shadow">Next</button>
+    <div class="bg-slate-900 p-2 flex justify-between items-center text-xs border-t border-slate-800">
+        <button onclick="changePage(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded shadow font-semibold transition-colors">Prev</button>
+        <span id="page-info" class="text-slate-300 font-medium">Hal 1</span>
+        <button onclick="changePage(1)" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded shadow font-semibold transition-colors">Next</button>
     </div>
 
-    <!-- Modal Detail Card -->
-    <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-2 overflow-y-auto">
-        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative mt-4 mb-10 border border-slate-700">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xs font-bold text-slate-400">ELITE FAN A446 JEMBER</h1>
-                <button onclick="closeDetail()" class="text-red-500 font-bold text-sm bg-slate-800 px-2 py-1 rounded hover:bg-slate-700">( Tutup )</button>
+    <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-2 overflow-y-auto custom-scroll">
+        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative mt-4 mb-10 border border-slate-700 shadow-2xl">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                <h1 class="text-xs font-bold text-slate-400 uppercase tracking-wider">ELITE FAN A446 JEMBER</h1>
+                <button onclick="closeDetail()" class="text-red-500 font-bold text-xs bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors">( Tutup )</button>
             </div>
+            
+            <!-- Navigation Controls -->
             <div class="flex justify-between mb-4">
-                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm shadow hover:bg-slate-600">( &lt; Prev )</button>
-                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm shadow hover:bg-slate-600">( Next &gt; )</button>
+                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-xs shadow hover:bg-slate-600 text-white transition-colors">( &lt; Prev )</button>
+                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-xs shadow hover:bg-slate-600 text-white transition-colors">( Next &gt; )</button>
             </div>
             
-            <div id="d-images" class="flex gap-2 overflow-x-auto mb-4 p-2 bg-slate-800 rounded justify-center"></div>
+            <!-- Image Carousel / Display -->
+            <div id="d-images" class="flex gap-2 overflow-x-auto mb-4 p-2 bg-slate-800 rounded justify-center custom-scroll"></div>
             
-            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2 text-center text-yellow-400"></h3>
+            <!-- Product Title -->
+            <h3 id="d-name" class="font-bold text-base mb-3 border-b border-slate-700 pb-2 text-center text-yellow-400"></h3>
             
-            <div id="d-fields" class="space-y-1 text-sm bg-slate-800 p-3 rounded-lg shadow-inner"></div>
+            <!-- Field Details -->
+            <div id="d-fields" class="space-y-1 text-xs bg-slate-800 p-3 rounded-lg shadow-inner"></div>
             
-            <div id="barcode-container" class="mt-6 flex flex-col items-center p-2 rounded">
-                <p class="text-xs text-slate-400 mb-2">QR Code Produk</p>
-                <div class="bg-white p-2 rounded-lg">
+            <!-- QR Code Section -->
+            <div id="barcode-container" class="mt-5 flex flex-col items-center p-3 rounded bg-slate-950 border border-slate-800">
+                <p class="text-xs text-slate-400 mb-2 font-medium">QR Code Produk</p>
+                <div class="bg-white p-2 rounded-lg shadow">
                     <canvas id="qrcode-canvas"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Scanner -->
     <div id="scanner-modal" class="fixed inset-0 bg-black/95 hidden z-50 p-4 flex flex-col items-center justify-center">
-        <div class="bg-slate-900 p-4 rounded-lg w-full max-w-md relative border border-slate-700">
+        <div class="bg-slate-900 p-4 rounded-lg w-full max-w-md relative border border-slate-700 shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
                 <h3 class="font-bold text-sm text-white flex items-center gap-2">📷 Scan Barcode</h3>
                 <button onclick="closeScanner()" class="text-red-500 font-bold text-lg px-2 py-1 bg-slate-800 rounded hover:bg-slate-700">&times;</button>
@@ -120,7 +209,7 @@
         let searchTimeout = null;
         
         let sortCol = null;
-        let sortOrder = 0; // 0: normal, -1: desc, 1: asc
+        let sortOrder = 0; // 0: standard, -1: desc, 1: asc
 
         const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
@@ -138,7 +227,7 @@
                 .catch(e => { 
                     const overlay = document.getElementById('loading-overlay');
                     if (overlay) {
-                        overlay.innerHTML = "<p class='text-red-500 font-bold p-4 text-center'>Gagal memuat API. Refresh ulang aplikasi.</p>";
+                        overlay.innerHTML = "<p class='text-red-500 font-bold p-4 text-center text-sm'>Gagal memuat API. Refresh ulang aplikasi.</p>";
                     }
                 });
             
@@ -184,7 +273,7 @@
                 return matchesSearch && matchesStock;
             });
 
-            // Sorting
+            // Sorting logic
             if (sortCol !== null && sortOrder !== 0) {
                 filteredList.sort((a, b) => {
                     let valA = a[sortCol];
@@ -216,6 +305,8 @@
             }
 
             currentKeys = Object.keys(filteredList[0] || {});
+            
+            // Prioritize image columns to the left
             currentKeys.sort((a, b) => {
                 const isImgA = a.toLowerCase().includes('gambar');
                 const isImgB = b.toLowerCase().includes('gambar');
@@ -224,12 +315,12 @@
                 return 0;
             });
 
-            // Render Header
+            // Render Header with double click sorting and resizers
             const trHead = document.createElement('tr');
             currentKeys.forEach((k, i) => {
                 const th = document.createElement('th');
                 th.className = 'w-32 cursor-pointer hover:bg-slate-700 transition-colors relative';
-                th.title = 'Klik 2x untuk mengurutkan';
+                th.title = 'Tekan 2x untuk mengurutkan';
                 
                 let sortIndicator = '';
                 if (sortCol === k) {
@@ -248,7 +339,7 @@
             });
             head.appendChild(trHead);
 
-            // Render Rows
+            // Render Table Rows with pagination
             const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
@@ -271,9 +362,9 @@
                         if (val) {
                             const img = document.createElement('img');
                             img.src = val;
-                            img.className = 'w-12 h-12 object-cover rounded mx-auto';
+                            img.className = 'w-10 h-10 object-cover rounded mx-auto border border-slate-700';
                             img.onerror = function() {
-                                this.src = 'https://placehold.co/48x48/1e293b/fff?text=No+Img';
+                                this.src = 'https://placehold.co/40x40/1e293b/fff?text=No+Img';
                             };
                             td.appendChild(img);
                         } else {
@@ -335,7 +426,7 @@
                     if (p[k]) {
                         const img = document.createElement('img');
                         img.src = p[k];
-                        img.className = 'w-32 h-32 object-cover rounded shadow border border-slate-600';
+                        img.className = 'w-28 h-28 object-cover rounded shadow border border-slate-600';
                         img.onerror = function() { this.style.display = 'none'; };
                         imgContainer.appendChild(img);
                     }
@@ -353,20 +444,20 @@
                         const a = document.createElement('a');
                         a.href = val;
                         a.target = '_blank';
-                        a.className = 'block bg-red-600 text-center py-2 rounded text-white font-bold my-3 shadow hover:bg-red-700 transition-colors';
+                        a.className = 'block bg-red-600 text-center py-2 rounded text-white font-bold my-3 shadow hover:bg-red-700 transition-colors text-xs';
                         a.textContent = 'Buka Link RR';
                         fieldsContainer.appendChild(a);
                     } else {
                         const fieldDiv = document.createElement('div');
-                        fieldDiv.className = 'border-b border-slate-700 py-2 px-1 rounded hover:bg-slate-700 cursor-pointer flex flex-col transition-colors';
+                        fieldDiv.className = 'border-b border-slate-700 py-1.5 px-1.5 rounded hover:bg-slate-700 cursor-pointer flex flex-col transition-colors';
                         fieldDiv.title = 'Klik untuk menyalin';
                         
                         const label = document.createElement('span');
-                        label.className = 'text-xs text-slate-400 font-bold';
+                        label.className = 'text-[10px] text-slate-400 font-bold uppercase';
                         label.textContent = k;
                         
                         const valueSpan = document.createElement('span');
-                        valueSpan.className = 'text-white';
+                        valueSpan.className = 'text-white text-xs mt-0.5';
                         valueSpan.textContent = val;
                         
                         fieldDiv.appendChild(label);
@@ -385,7 +476,7 @@
                 new QRious({
                     element: canvas,
                     value: String(qrValue),
-                    size: 180,
+                    size: 160,
                     background: 'white',
                     foreground: 'black',
                     level: 'H'
@@ -416,7 +507,7 @@
 
             let toast = document.createElement('div');
             toast.id = 'custom-toast';
-            toast.className = 'fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl z-[100] text-sm border border-slate-600 animate-bounce text-center max-w-xs truncate';
+            toast.className = 'fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2.5 rounded-full shadow-2xl z-[100] text-xs border border-slate-600 animate-bounce text-center max-w-xs truncate';
             toast.innerText = msg;
             document.body.appendChild(toast);
             setTimeout(() => { if (toast.parentNode) toast.remove(); }, 2500);
@@ -483,22 +574,22 @@
             }
             
             const title = document.createElement('div');
-            title.className = 'font-bold text-yellow-400 border-b border-slate-600 pb-2 mb-1';
-            title.textContent = 'Centang untuk tampilkan:';
+            title.className = 'font-bold text-yellow-400 border-b border-slate-700 pb-1.5 mb-1 text-xs';
+            title.textContent = 'Centang untuk Tampilkan:';
             menu.appendChild(title);
 
             keys.forEach((k, i) => {
                 const label = document.createElement('label');
-                label.className = 'flex items-center gap-2 cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors select-none';
+                label.className = 'flex items-center gap-2 cursor-pointer hover:bg-slate-700 p-1.5 rounded transition-colors select-none text-xs';
                 
                 const cb = document.createElement('input');
                 cb.type = 'checkbox';
-                cb.className = 'w-4 h-4 cursor-pointer accent-red-600';
+                cb.className = 'w-3.5 h-3.5 cursor-pointer accent-red-600';
                 cb.checked = !hiddenColumns.has(i);
                 cb.onchange = (e) => toggleCol(i, e.target.checked);
 
                 const span = document.createElement('span');
-                span.className = 'truncate';
+                span.className = 'truncate text-slate-200';
                 span.textContent = k;
 
                 label.appendChild(cb);
@@ -538,7 +629,7 @@
             }
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
                 (decodedText) => {
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) searchInput.value = decodedText;
