@@ -6,9 +6,10 @@
     <title>ELITE FAN A446 JEMBER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
-        .table-container { overflow-x: auto; height: calc(100vh - 200px); }
+        .table-container { overflow-x: auto; height: calc(100vh - 210px); }
         table { border-collapse: collapse; width: 100%; border: 1px solid #334155; table-layout: fixed; }
         th, td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
         th { background-color: #1E293B; }
@@ -30,8 +31,11 @@
         <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
         <div class="flex gap-2 mb-2">
             <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-slate-800 p-2 rounded text-sm border border-slate-700">
+            <button onclick="openScanner()" class="bg-red-600 px-3 py-2 rounded text-xs font-bold flex items-center justify-center shrink-0" title="Scan Barcode">
+                📷 Scan
+            </button>
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1" id="cat-btns">
+        <div class="flex gap-2 overflow-x-auto pb-1 items-center" id="cat-btns">
             <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap active-btn">FAN</button>
             <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
             <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
@@ -61,8 +65,8 @@
                 <button onclick="closeDetail()" class="text-red-500 font-bold text-xl">X</button>
             </div>
             <div class="flex justify-between mb-4">
-                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold"><</button>
-                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold">></button>
+                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold">&lt;</button>
+                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold">&gt;</button>
             </div>
             <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2"></h3>
             <div id="d-images" class="flex gap-2 overflow-x-auto mb-4"></div>
@@ -73,9 +77,22 @@
         </div>
     </div>
 
+    <div id="scanner-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-4 flex flex-col items-center justify-center">
+        <div class="bg-slate-900 p-4 rounded-lg w-full max-w-md relative">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-sm text-white">Scan Barcode Kamera</h3>
+                <button onclick="closeScanner()" class="text-red-500 font-bold text-lg px-2">X</button>
+            </div>
+            <div id="reader" class="w-full rounded overflow-hidden bg-black min-h-[250px]"></div>
+            <p class="text-xs text-slate-400 mt-2 text-center">Arahkan kamera ke barcode produk</p>
+        </div>
+    </div>
+
     <script>
         let allData = {}, currentCategory = 'FAN', showOnlyStock = false, currentPage = 1, pageSize = 50, filteredList = [];
         let hiddenColumns = new Set();
+        let html5QrCode = null;
+        let searchTimeout = null;
         const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
         window.onload = () => {
@@ -83,21 +100,33 @@
                 .then(r => r.json())
                 .then(data => { allData = data; renderAll(); document.getElementById('loading-overlay').style.display = 'none'; })
                 .catch(e => { document.getElementById('loading-overlay').innerHTML = "Gagal memuat API."; });
-            document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderAll(); });
+            
+            document.getElementById('searchInput').addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    currentPage = 1;
+                    renderAll();
+                }, 300);
+            });
         };
 
         function renderAll() {
             const rawData = allData[currentCategory] || [];
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            
             filteredList = rawData.filter(p => {
                 const matchesSearch = Object.values(p).some(val => String(val).toLowerCase().includes(searchQuery));
-                const matchesStock = !showOnlyStock || parseInt(p['Stock A446'] || 0) > 0;
+                const matchesStock = !showOnlyStock || parseFloat(p['Stock A446'] || 0) > 0;
                 return matchesSearch && matchesStock;
             });
 
             const body = document.getElementById('table-body'), head = document.getElementById('table-head');
             body.innerHTML = ''; head.innerHTML = '';
-            if (filteredList.length === 0) return;
+            if (filteredList.length === 0) {
+                renderColMenu([]);
+                document.getElementById('page-info').innerText = 'Hal 1 / 1';
+                return;
+            }
 
             let allKeys = Object.keys(filteredList[0]);
             allKeys.sort((a, b) => {
@@ -114,10 +143,13 @@
                 const tr = document.createElement('tr');
                 tr.className = 'row-hover';
                 tr.onclick = () => openDetail((currentPage - 1) * pageSize + idx);
-                tr.innerHTML = allKeys.map(k => `<td>${(k.toLowerCase().includes('gambar') && p[k]) ? `<img src="${p[k]}" class="w-10 h-10 object-cover rounded">` : (p[k] || '-')}</td>`).join('');
+                tr.innerHTML = allKeys.map(k => `<td>${(k.toLowerCase().includes('gambar') && p[k]) ? `<img src="${p[k]}" class="w-10 h-10 object-cover rounded" onerror="this.src='https://placehold.co/40x40/1e293b/fff?text=No+Img'">` : (p[k] || '-')}</td>`).join('');
                 body.appendChild(tr);
             });
-            document.getElementById('page-info').innerText = `Hal ${currentPage} / ${Math.ceil(filteredList.length / pageSize) || 1}`;
+
+            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            document.getElementById('page-info').innerText = `Hal ${currentPage} / ${totalPages}`;
             
             renderColMenu(allKeys);
             applyHiddenColumns();
@@ -125,7 +157,11 @@
 
         function renderColMenu(keys) {
             const menu = document.getElementById('col-menu');
-            menu.innerHTML = keys.map((k, i) => `<label class="flex items-center gap-1"><input type="checkbox" ${!hiddenColumns.has(i) ? 'checked' : ''} onchange="toggleCol(${i}, this.checked)"> ${k}</label>`).join('');
+            if(keys.length === 0) {
+                menu.innerHTML = '<span class="text-slate-400">Tidak ada kolom</span>';
+                return;
+            }
+            menu.innerHTML = keys.map((k, i) => `<label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" ${!hiddenColumns.has(i) ? 'checked' : ''} onchange="toggleCol(${i}, this.checked)"> ${k}</label>`).join('');
         }
 
         function toggleCol(idx, show) {
@@ -143,7 +179,7 @@
             let currentTh = e.target.parentElement;
             let startX = e.pageX;
             let startWidth = currentTh.offsetWidth;
-            const resizing = (e) => currentTh.style.width = (startWidth + (e.pageX - startX)) + 'px';
+            const resizing = (e) => currentTh.style.width = Math.max(50, (startWidth + (e.pageX - startX))) + 'px';
             const stopResizing = () => { document.removeEventListener('mousemove', resizing); document.removeEventListener('mouseup', stopResizing); };
             document.addEventListener('mousemove', resizing);
             document.addEventListener('mouseup', stopResizing);
@@ -152,11 +188,11 @@
         function openDetail(idx) {
             const p = filteredList[idx];
             document.getElementById('d-name').innerText = p['PRODUCT NAME'] || 'Detail Produk';
-            document.getElementById('d-images').innerHTML = Object.keys(p).filter(k => k.toLowerCase().includes('gambar')).map(k => p[k] ? `<img src="${p[k]}" class="w-24 h-24 object-cover rounded">` : '').join('');
+            document.getElementById('d-images').innerHTML = Object.keys(p).filter(k => k.toLowerCase().includes('gambar')).map(k => p[k] ? `<img src="${p[k]}" class="w-24 h-24 object-cover rounded shadow" onerror="this.src='https://placehold.co/96x96/1e293b/fff?text=No+Img'">` : '').join('');
             const fields = document.getElementById('d-fields');
             fields.innerHTML = Object.keys(p).filter(k => !k.startsWith('_')).map(k => {
-                if(k === 'Link to RR') return `<a href="${p[k]}" target="_blank" class="block bg-red-600 text-center py-2 rounded text-white font-bold my-2">Buka Link RR</a>`;
-                return `<div class="border-b border-slate-700 py-1" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
+                if(k === 'Link to RR') return `<a href="${p[k]}" target="_blank" class="block bg-red-600 text-center py-2 rounded text-white font-bold my-2 shadow">Buka Link RR</a>`;
+                return `<div class="border-b border-slate-700 py-1 px-1 rounded hover:bg-slate-800 cursor-pointer" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
             }).join('');
             document.getElementById('detail-modal').classList.remove('hidden');
             try { JsBarcode("#barcode-svg", p['BARCODE'] || '000', { width: 2, height: 40 }); } catch(e){}
@@ -166,15 +202,61 @@
         function copyText(t) {
             const el = document.createElement("textarea"); el.value = t; document.body.appendChild(el); el.select();
             document.execCommand('copy'); document.body.removeChild(el);
-            alert('Teks disalin: ' + t);
+            showToast('Teks disalin: ' + t);
+        }
+
+        function showToast(msg) {
+            let toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded shadow-lg z-50 text-xs border border-slate-600';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
         }
 
         function navigate(d) { if(filteredList[window.currentIdx + d]) openDetail(window.currentIdx + d); }
         function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
         function setCategory(cat) { currentCategory = cat; currentPage = 1; renderAll(); document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active-btn', b.id === 'cat-'+cat)); }
         function toggleStock() { showOnlyStock = !showOnlyStock; currentPage = 1; renderAll(); document.getElementById('stockBtn').classList.toggle('active-btn', showOnlyStock); }
-        function changePage(d) { currentPage = Math.max(1, Math.min(Math.ceil(filteredList.length/pageSize), currentPage + d)); renderAll(); }
+        function changePage(d) { 
+            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
+            currentPage = Math.max(1, Math.min(totalPages, currentPage + d)); 
+            renderAll(); 
+        }
         function toggleColMenu() { document.getElementById('col-menu').classList.toggle('hidden'); }
+
+        function openScanner() {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => {
+                    document.getElementById('searchInput').value = decodedText;
+                    closeScanner();
+                    currentPage = 1;
+                    renderAll();
+                },
+                (errorMessage) => {}
+            ).catch(err => {
+                console.error("Error starting scanner.", err);
+                showToast("Gagal membuka kamera / izin ditolak.");
+                closeScanner();
+            });
+        }
+
+        function closeScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scanner-modal').classList.add('hidden');
+            }
+        }
     </script>
 </body>
 </html>
