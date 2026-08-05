@@ -7,17 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <style>
         body { background-color: #0F172A; color: #FFFFFF; font-family: sans-serif; }
         .table-container { overflow-x: auto; height: calc(100vh - 210px); }
         table { border-collapse: collapse; width: 100%; border: 1px solid #334155; table-layout: fixed; }
-        th, td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
-        th { background-color: #1E293B; }
-        .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; height: 100%; user-select: none; }
+        th { background-color: #1E293B; border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 -1px 0 #334155; user-select: none; }
+        td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+        .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; height: 100%; user-select: none; z-index: 20; }
         .resizer:hover { background: #64748b; }
         .row-hover:hover { background-color: #334155; cursor: pointer; }
-        .active-btn { background-color: #DC2626 !important; }
+        .active-btn { background-color: #DC2626 !important; border-color: #B91C1C !important; color: white !important;}
         .hidden-col { display: none !important; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1E293B; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -27,25 +32,30 @@
         <p>Memuat Data...</p>
     </div>
 
-    <header class="bg-slate-950 p-3 shadow-lg z-20">
+    <header class="bg-slate-950 p-3 shadow-lg z-20 relative">
         <h1 class="text-lg font-bold mb-2">ELITE FAN <span class="text-red-600">A446</span> JEMBER</h1>
         <div class="flex gap-2 mb-2">
-            <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-slate-800 p-2 rounded text-sm border border-slate-700">
+            <div class="relative w-full flex items-center bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                <input type="text" id="searchInput" placeholder="Cari..." class="w-full bg-transparent p-2 pr-8 text-sm outline-none">
+                <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-2 text-slate-400 hover:text-white hidden font-bold text-lg leading-none" title="Hapus Pencarian">&times;</button>
+            </div>
             <button onclick="openScanner()" class="bg-red-600 px-3 py-2 rounded text-xs font-bold flex items-center justify-center shrink-0" title="Scan Barcode">
                 📷 Scan
             </button>
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 items-center" id="cat-btns">
+        <div class="flex gap-2 overflow-x-auto pb-1 items-center relative" id="cat-btns">
             <button onclick="setCategory('FAN')" id="cat-FAN" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap active-btn">FAN</button>
             <button onclick="setCategory('Electrical')" id="cat-Electrical" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">Electrical</button>
             <button onclick="setCategory('LIGHTING')" id="cat-LIGHTING" class="cat-btn bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap">LIGHTING</button>
             <button onclick="toggleStock()" id="stockBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Stock A446 > 0</button>
-            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600">Filter Kolom</button>
+            <button onclick="toggleColMenu()" id="colBtn" class="bg-slate-700 px-3 py-1 rounded text-xs whitespace-nowrap border border-slate-600 transition-colors">Filter Kolom</button>
         </div>
-        <div id="col-menu" class="hidden bg-slate-800 p-2 rounded mt-2 flex flex-wrap gap-2 text-xs"></div>
+        
+        <div id="col-menu" class="hidden absolute right-4 top-full mt-2 bg-slate-800 p-3 rounded-lg shadow-2xl border border-slate-600 flex-col gap-2 text-xs z-50 max-h-64 overflow-y-auto min-w-[200px] custom-scroll">
+        </div>
     </header>
 
-    <main class="flex-1 overflow-auto table-container">
+    <main class="flex-1 overflow-auto table-container" id="main-container">
         <table id="data-table">
             <thead id="table-head"></thead>
             <tbody id="table-body"></tbody>
@@ -53,83 +63,160 @@
     </main>
 
     <div class="bg-slate-900 p-2 flex justify-between items-center text-xs">
-        <button onclick="changePage(-1)" class="bg-slate-700 px-4 py-1 rounded">Prev</button>
+        <button onclick="changePage(-1)" class="bg-slate-700 px-4 py-1 rounded shadow">Prev</button>
         <span id="page-info">Hal 1</span>
-        <button onclick="changePage(1)" class="bg-slate-700 px-4 py-1 rounded">Next</button>
+        <button onclick="changePage(1)" class="bg-slate-700 px-4 py-1 rounded shadow">Next</button>
     </div>
 
+    <!-- Modal Detail Card -->
     <div id="detail-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-2 overflow-y-auto">
-        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative">
+        <div class="bg-slate-900 p-4 rounded-lg max-w-lg mx-auto relative mt-4 mb-10 border border-slate-700">
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-xs font-bold text-slate-400">ELITE FAN A446 JEMBER</h1>
-                <button onclick="closeDetail()" class="text-red-500 font-bold text-sm">( Tutup )</button>
+                <button onclick="closeDetail()" class="text-red-500 font-bold text-sm bg-slate-800 px-2 py-1 rounded hover:bg-slate-700">( Tutup )</button>
             </div>
             <div class="flex justify-between mb-4">
-                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm">( &lt; Prev )</button>
-                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm">( Next &gt; )</button>
+                <button onclick="navigate(-1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm shadow hover:bg-slate-600">( &lt; Prev )</button>
+                <button onclick="navigate(1)" class="bg-slate-700 px-4 py-2 rounded font-bold text-sm shadow hover:bg-slate-600">( Next &gt; )</button>
             </div>
-            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2"></h3>
-            <div id="d-images" class="flex gap-2 overflow-x-auto mb-4"></div>
-            <div id="d-fields" class="space-y-1 text-sm"></div>
-            <div id="barcode-container" class="mt-6 flex flex-col items-center bg-white p-2 rounded">
-                <canvas id="qrcode-canvas"></canvas>
+            
+            <div id="d-images" class="flex gap-2 overflow-x-auto mb-4 p-2 bg-slate-800 rounded justify-center"></div>
+            
+            <h3 id="d-name" class="font-bold text-lg mb-2 border-b border-slate-700 pb-2 text-center text-yellow-400"></h3>
+            
+            <div id="d-fields" class="space-y-1 text-sm bg-slate-800 p-3 rounded-lg shadow-inner"></div>
+            
+            <div id="barcode-container" class="mt-6 flex flex-col items-center p-2 rounded">
+                <p class="text-xs text-slate-400 mb-2">QR Code Produk</p>
+                <div class="bg-white p-2 rounded-lg">
+                    <canvas id="qrcode-canvas"></canvas>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="scanner-modal" class="fixed inset-0 bg-black/90 hidden z-50 p-4 flex flex-col items-center justify-center">
-        <div class="bg-slate-900 p-4 rounded-lg w-full max-w-md relative">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-sm text-white">Scan Barcode Kamera</h3>
-                <button onclick="closeScanner()" class="text-red-500 font-bold text-lg px-2">X</button>
+    <!-- Modal Scanner -->
+    <div id="scanner-modal" class="fixed inset-0 bg-black/95 hidden z-50 p-4 flex flex-col items-center justify-center">
+        <div class="bg-slate-900 p-4 rounded-lg w-full max-w-md relative border border-slate-700">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">📷 Scan Barcode</h3>
+                <button onclick="closeScanner()" class="text-red-500 font-bold text-lg px-2 py-1 bg-slate-800 rounded hover:bg-slate-700">&times;</button>
             </div>
-            <div id="reader" class="w-full rounded overflow-hidden bg-black min-h-[250px]"></div>
-            <p class="text-xs text-slate-400 mt-2 text-center">Arahkan kamera ke barcode produk</p>
+            <div id="reader" class="w-full rounded-lg overflow-hidden bg-black min-h-[250px] border-2 border-dashed border-slate-600"></div>
+            <p class="text-xs text-slate-400 mt-4 text-center">Arahkan kamera HP ke barcode / QR code produk.</p>
         </div>
     </div>
 
     <script>
-        let allData = {}, currentCategory = 'FAN', showOnlyStock = false, currentPage = 1, pageSize = 50, filteredList = [];
+        let allData = {};
+        let currentCategory = 'FAN';
+        let showOnlyStock = false;
+        let currentPage = 1;
+        let pageSize = 50;
+        let filteredList = [];
+        let currentKeys = [];
         let hiddenColumns = new Set();
         let html5QrCode = null;
         let searchTimeout = null;
+        
+        let sortCol = null;
+        let sortOrder = 0; // 0: normal, -1: desc, 1: asc
+
         const API = 'https://script.google.com/macros/s/AKfycbyio64Ysy3kX0IdRTmWtZBiUryY9gmQlhQ1oeimS35xqTEh5Id1y1lEDNXI0Eo9yx78kw/exec';
 
         window.onload = () => {
             fetch(API)
                 .then(r => r.json())
-                .then(data => { allData = data; renderAll(); document.getElementById('loading-overlay').style.display = 'none'; })
-                .catch(e => { document.getElementById('loading-overlay').innerHTML = "Gagal memuat API. Refres ulang.."; });
+                .then(data => { 
+                    allData = data || {}; 
+                    if (!allData['FAN'] && Object.keys(allData).length > 0) {
+                        currentCategory = Object.keys(allData)[0];
+                    }
+                    renderAll(); 
+                    document.getElementById('loading-overlay').style.display = 'none'; 
+                })
+                .catch(e => { 
+                    const overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.innerHTML = "<p class='text-red-500 font-bold p-4 text-center'>Gagal memuat API. Refresh ulang aplikasi.</p>";
+                    }
+                });
             
-            document.getElementById('searchInput').addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    currentPage = 1;
-                    renderAll();
-                }, 300);
-            });
+            const searchInput = document.getElementById('searchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    if (clearSearchBtn) {
+                        clearSearchBtn.style.display = e.target.value.length > 0 ? 'block' : 'none';
+                    }
+
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        currentPage = 1;
+                        renderAll();
+                    }, 300);
+                });
+            }
         };
+
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            if (searchInput) searchInput.value = '';
+            if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+            currentPage = 1;
+            renderAll();
+            if (searchInput) searchInput.focus();
+        }
 
         function renderAll() {
             const rawData = allData[currentCategory] || [];
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
+            // Filter Data
             filteredList = rawData.filter(p => {
-                const matchesSearch = Object.values(p).some(val => String(val).toLowerCase().includes(searchQuery));
-                const matchesStock = !showOnlyStock || parseFloat(p['Stock A446'] || 0) > 0;
+                if (!p || typeof p !== 'object') return false;
+                const matchesSearch = !searchQuery || Object.values(p).some(val => String(val || '').toLowerCase().includes(searchQuery));
+                const stockVal = parseFloat(p['Stock A446']) || 0;
+                const matchesStock = !showOnlyStock || stockVal > 0;
                 return matchesSearch && matchesStock;
             });
 
-            const body = document.getElementById('table-body'), head = document.getElementById('table-head');
-            body.innerHTML = ''; head.innerHTML = '';
+            // Sorting
+            if (sortCol !== null && sortOrder !== 0) {
+                filteredList.sort((a, b) => {
+                    let valA = a[sortCol];
+                    let valB = b[sortCol];
+                    
+                    if (valA === undefined || valA === null) valA = '';
+                    if (valB === undefined || valB === null) valB = '';
+                    
+                    let numA = parseFloat(valA);
+                    let numB = parseFloat(valB);
+                    
+                    if (!isNaN(numA) && !isNaN(numB) && String(valA).trim() !== '' && String(valB).trim() !== '') {
+                        return (numA - numB) * sortOrder;
+                    } else {
+                        return String(valA).localeCompare(String(valB)) * sortOrder;
+                    }
+                });
+            }
+
+            const body = document.getElementById('table-body');
+            const head = document.getElementById('table-head');
+            body.innerHTML = '';
+            head.innerHTML = '';
+            
             if (filteredList.length === 0) {
                 renderColMenu([]);
                 document.getElementById('page-info').innerText = 'Hal 1 / 1';
                 return;
             }
 
-            let allKeys = Object.keys(filteredList[0]);
-            allKeys.sort((a, b) => {
+            currentKeys = Object.keys(filteredList[0] || {});
+            currentKeys.sort((a, b) => {
                 const isImgA = a.toLowerCase().includes('gambar');
                 const isImgB = b.toLowerCase().includes('gambar');
                 if (isImgA && !isImgB) return -1;
@@ -137,31 +224,287 @@
                 return 0;
             });
 
-            head.innerHTML = `<tr>${allKeys.map((k, i) => `<th class="w-32" onmousedown="startResizing(event, ${i})">${k}<div class="resizer"></div></th>`).join('')}</tr>`;
-            
-            filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize).forEach((p, idx) => {
+            // Render Header
+            const trHead = document.createElement('tr');
+            currentKeys.forEach((k, i) => {
+                const th = document.createElement('th');
+                th.className = 'w-32 cursor-pointer hover:bg-slate-700 transition-colors relative';
+                th.title = 'Klik 2x untuk mengurutkan';
+                
+                let sortIndicator = '';
+                if (sortCol === k) {
+                    sortIndicator = sortOrder === -1 ? ' ⬇️' : (sortOrder === 1 ? ' ⬆️' : '');
+                }
+                
+                th.textContent = k + sortIndicator;
+                
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer';
+                resizer.onmousedown = (e) => startResizing(e, th);
+                th.appendChild(resizer);
+                
+                th.ondblclick = () => handleSortByIndex(i);
+                trHead.appendChild(th);
+            });
+            head.appendChild(trHead);
+
+            // Render Rows
+            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = currentPage * pageSize;
+            const paginatedData = filteredList.slice(startIndex, endIndex);
+
+            paginatedData.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = 'row-hover';
-                tr.onclick = () => openDetail((currentPage - 1) * pageSize + idx);
-                tr.innerHTML = allKeys.map(k => `<td>${(k.toLowerCase().includes('gambar') && p[k]) ? `<img src="${p[k]}" class="w-10 h-10 object-cover rounded" onerror="this.src='https://placehold.co/40x40/1e293b/fff?text=No+Img'">` : (p[k] || '-')}</td>`).join('');
+                const actualIdx = startIndex + idx; 
+                tr.onclick = () => openDetail(actualIdx);
+                
+                currentKeys.forEach(k => {
+                    const td = document.createElement('td');
+                    const val = p[k];
+                    if (k.toLowerCase().includes('gambar')) {
+                        td.className = 'text-center';
+                        if (val) {
+                            const img = document.createElement('img');
+                            img.src = val;
+                            img.className = 'w-12 h-12 object-cover rounded mx-auto';
+                            img.onerror = function() {
+                                this.src = 'https://placehold.co/48x48/1e293b/fff?text=No+Img';
+                            };
+                            td.appendChild(img);
+                        } else {
+                            td.textContent = '-';
+                        }
+                    } else {
+                        td.textContent = (val !== undefined && val !== null && val !== '') ? val : '-';
+                    }
+                    tr.appendChild(td);
+                });
                 body.appendChild(tr);
             });
 
-            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
-            if (currentPage > totalPages) currentPage = totalPages;
             document.getElementById('page-info').innerText = `Hal ${currentPage} / ${totalPages}`;
-            
-            renderColMenu(allKeys);
+            renderColMenu(currentKeys);
             applyHiddenColumns();
+        }
+
+        function handleSortByIndex(i) {
+            if (i < 0 || i >= currentKeys.length) return;
+            const key = currentKeys[i];
+            if (sortCol === key) {
+                if (sortOrder === -1) sortOrder = 1;
+                else if (sortOrder === 1) { sortOrder = 0; sortCol = null; }
+            } else {
+                sortCol = key;
+                sortOrder = -1;
+            }
+            renderAll();
+        }
+
+        function startResizing(e, th) {
+            e.stopPropagation();
+            let startX = e.pageX;
+            let startWidth = th.offsetWidth;
+            const resizing = (ev) => {
+                th.style.width = Math.max(50, (startWidth + (ev.pageX - startX))) + 'px';
+            };
+            const stopResizing = () => {
+                document.removeEventListener('mousemove', resizing);
+                document.removeEventListener('mouseup', stopResizing);
+            };
+            document.addEventListener('mousemove', resizing);
+            document.addEventListener('mouseup', stopResizing);
+        }
+
+        function openDetail(idx) {
+            if (idx < 0 || idx >= filteredList.length) return;
+            const p = filteredList[idx];
+            
+            document.getElementById('d-name').textContent = p['PRODUCT NAME'] || 'Detail Produk';
+            
+            const imgContainer = document.getElementById('d-images');
+            imgContainer.innerHTML = '';
+            
+            Object.keys(p)
+                .filter(k => k.toLowerCase().includes('gambar'))
+                .forEach(k => {
+                    if (p[k]) {
+                        const img = document.createElement('img');
+                        img.src = p[k];
+                        img.className = 'w-32 h-32 object-cover rounded shadow border border-slate-600';
+                        img.onerror = function() { this.style.display = 'none'; };
+                        imgContainer.appendChild(img);
+                    }
+                });
+            
+            const fieldsContainer = document.getElementById('d-fields');
+            fieldsContainer.innerHTML = '';
+
+            Object.keys(p)
+                .filter(k => !k.startsWith('_') && !k.toLowerCase().includes('gambar'))
+                .forEach(k => {
+                    const val = p[k] || '-';
+                    
+                    if (k.toLowerCase() === 'link to rr' && val !== '-') {
+                        const a = document.createElement('a');
+                        a.href = val;
+                        a.target = '_blank';
+                        a.className = 'block bg-red-600 text-center py-2 rounded text-white font-bold my-3 shadow hover:bg-red-700 transition-colors';
+                        a.textContent = 'Buka Link RR';
+                        fieldsContainer.appendChild(a);
+                    } else {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'border-b border-slate-700 py-2 px-1 rounded hover:bg-slate-700 cursor-pointer flex flex-col transition-colors';
+                        fieldDiv.title = 'Klik untuk menyalin';
+                        
+                        const label = document.createElement('span');
+                        label.className = 'text-xs text-slate-400 font-bold';
+                        label.textContent = k;
+                        
+                        const valueSpan = document.createElement('span');
+                        valueSpan.className = 'text-white';
+                        valueSpan.textContent = val;
+                        
+                        fieldDiv.appendChild(label);
+                        fieldDiv.appendChild(valueSpan);
+                        
+                        fieldDiv.onclick = () => copyText(val);
+                        fieldsContainer.appendChild(fieldDiv);
+                    }
+                });
+            
+            document.getElementById('detail-modal').classList.remove('hidden');
+            
+            const canvas = document.getElementById('qrcode-canvas');
+            const qrValue = p['BARCODE'] || p['PRODUCT NAME'] || '000';
+            try { 
+                new QRious({
+                    element: canvas,
+                    value: String(qrValue),
+                    size: 180,
+                    background: 'white',
+                    foreground: 'black',
+                    level: 'H'
+                }); 
+            } catch(e) { console.error("QR Error", e); }
+            
+            window.currentIdx = idx;
+        }
+
+        function copyText(text) {
+            if (!text || text === '-') return;
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand("copy");
+                showToast('Teks disalin: ' + text);
+            } catch(err) {
+                showToast('Gagal menyalin teks');
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function showToast(msg) {
+            const existingToast = document.getElementById('custom-toast');
+            if (existingToast) existingToast.remove();
+
+            let toast = document.createElement('div');
+            toast.id = 'custom-toast';
+            toast.className = 'fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl z-[100] text-sm border border-slate-600 animate-bounce text-center max-w-xs truncate';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 2500);
+        }
+
+        function navigate(direction) {
+            const newIdx = window.currentIdx + direction;
+            if (newIdx >= 0 && newIdx < filteredList.length) {
+                openDetail(newIdx);
+            } else {
+                showToast(direction > 0 ? "Ini data terakhir." : "Ini data pertama.");
+            }
+        }
+        
+        function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
+        
+        function setCategory(cat) { 
+            currentCategory = cat; 
+            currentPage = 1; 
+            sortCol = null; sortOrder = 0;
+            renderAll(); 
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active-btn', b.id === 'cat-'+cat)); 
+        }
+        
+        function toggleStock() { 
+            showOnlyStock = !showOnlyStock; 
+            currentPage = 1; 
+            renderAll(); 
+            const stockBtn = document.getElementById('stockBtn');
+            if (stockBtn) stockBtn.classList.toggle('active-btn', showOnlyStock); 
+        }
+        
+        function changePage(d) { 
+            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
+            const newPage = currentPage + d;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderAll(); 
+                const mainContainer = document.getElementById('main-container');
+                if (mainContainer) mainContainer.scrollTop = 0;
+            }
+        }
+        
+        function toggleColMenu() { 
+            const menu = document.getElementById('col-menu');
+            if (!menu) return;
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+            }
         }
 
         function renderColMenu(keys) {
             const menu = document.getElementById('col-menu');
-            if(keys.length === 0) {
+            if (!menu) return;
+            menu.innerHTML = '';
+            
+            if (keys.length === 0) {
                 menu.innerHTML = '<span class="text-slate-400">Tidak ada kolom</span>';
                 return;
             }
-            menu.innerHTML = keys.map((k, i) => `<label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" ${!hiddenColumns.has(i) ? 'checked' : ''} onchange="toggleCol(${i}, this.checked)"> ${k}</label>`).join('');
+            
+            const title = document.createElement('div');
+            title.className = 'font-bold text-yellow-400 border-b border-slate-600 pb-2 mb-1';
+            title.textContent = 'Centang untuk tampilkan:';
+            menu.appendChild(title);
+
+            keys.forEach((k, i) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-2 cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors select-none';
+                
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'w-4 h-4 cursor-pointer accent-red-600';
+                cb.checked = !hiddenColumns.has(i);
+                cb.onchange = (e) => toggleCol(i, e.target.checked);
+
+                const span = document.createElement('span');
+                span.className = 'truncate';
+                span.textContent = k;
+
+                label.appendChild(cb);
+                label.appendChild(span);
+                menu.appendChild(label);
+            });
         }
 
         function toggleCol(idx, show) {
@@ -170,65 +513,23 @@
         }
 
         function applyHiddenColumns() {
+            document.querySelectorAll('.hidden-col').forEach(el => el.classList.remove('hidden-col'));
+            
             hiddenColumns.forEach(idx => {
                 document.querySelectorAll(`th:nth-child(${idx+1}), td:nth-child(${idx+1})`).forEach(el => el.classList.add('hidden-col'));
             });
-        }
 
-        function startResizing(e, idx) {
-            let currentTh = e.target.parentElement;
-            let startX = e.pageX;
-            let startWidth = currentTh.offsetWidth;
-            const resizing = (e) => currentTh.style.width = Math.max(50, (startWidth + (e.pageX - startX))) + 'px';
-            const stopResizing = () => { document.removeEventListener('mousemove', resizing); document.removeEventListener('mouseup', stopResizing); };
-            document.addEventListener('mousemove', resizing);
-            document.addEventListener('mouseup', stopResizing);
+            const colBtn = document.getElementById('colBtn');
+            if (colBtn) {
+                if (hiddenColumns.size > 0) {
+                    colBtn.classList.add('bg-red-600', 'text-white', 'border-red-500');
+                    colBtn.classList.remove('bg-slate-700', 'border-slate-600');
+                } else {
+                    colBtn.classList.add('bg-slate-700', 'border-slate-600');
+                    colBtn.classList.remove('bg-red-600', 'text-white', 'border-red-500');
+                }
+            }
         }
-
-        function openDetail(idx) {
-            const p = filteredList[idx];
-            document.getElementById('d-name').innerText = p['PRODUCT NAME'] || 'Detail Produk';
-            document.getElementById('d-images').innerHTML = Object.keys(p).filter(k => k.toLowerCase().includes('gambar')).map(k => p[k] ? `<img src="${p[k]}" class="w-24 h-24 object-cover rounded shadow" onerror="this.src='https://placehold.co/96x96/1e293b/fff?text=No+Img'">` : '').join('');
-            const fields = document.getElementById('d-fields');
-            fields.innerHTML = Object.keys(p).filter(k => !k.startsWith('_')).map(k => {
-                if(k === 'Link to RR') return `<a href="${p[k]}" target="_blank" class="block bg-red-600 text-center py-2 rounded text-white font-bold my-2 shadow">Buka Link RR</a>`;
-            return `<div class="border-b border-slate-700 py-1 px-1 rounded hover:bg-slate-800 cursor-pointer" onclick="copyText('${p[k]}')"><strong>${k}:</strong> ${p[k]}</div>`;
-        }).join('');
-        document.getElementById('detail-modal').classList.remove('hidden');
-        try { 
-            new QRious({
-                element: document.getElementById('qrcode-canvas'),
-                value: p['BARCODE'] || p['PRODUCT NAME'] || '000',
-                size: 150
-            }); 
-        } catch(e){}
-        window.currentIdx = idx;
-    }
-
-    function copyText(t) {
-            const el = document.createElement("textarea"); el.value = t; document.body.appendChild(el); el.select();
-            document.execCommand('copy'); document.body.removeChild(el);
-            showToast('Teks disalin: ' + t);
-        }
-
-        function showToast(msg) {
-            let toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded shadow-lg z-50 text-xs border border-slate-600';
-            toast.innerText = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
-
-        function navigate(d) { if(filteredList[window.currentIdx + d]) openDetail(window.currentIdx + d); }
-        function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); }
-        function setCategory(cat) { currentCategory = cat; currentPage = 1; renderAll(); document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active-btn', b.id === 'cat-'+cat)); }
-        function toggleStock() { showOnlyStock = !showOnlyStock; currentPage = 1; renderAll(); document.getElementById('stockBtn').classList.toggle('active-btn', showOnlyStock); }
-        function changePage(d) { 
-            const totalPages = Math.ceil(filteredList.length / pageSize) || 1;
-            currentPage = Math.max(1, Math.min(totalPages, currentPage + d)); 
-            renderAll(); 
-        }
-        function toggleColMenu() { document.getElementById('col-menu').classList.toggle('hidden'); }
 
         function openScanner() {
             document.getElementById('scanner-modal').classList.remove('hidden');
@@ -237,17 +538,20 @@
             }
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    document.getElementById('searchInput').value = decodedText;
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) searchInput.value = decodedText;
+                    const clearBtn = document.getElementById('clearSearchBtn');
+                    if (clearBtn) clearBtn.style.display = 'block';
                     closeScanner();
                     currentPage = 1;
                     renderAll();
+                    showToast("Barcode ditemukan!");
                 },
                 (errorMessage) => {}
             ).catch(err => {
-                console.error("Error starting scanner.", err);
-                showToast("Gagal membuka kamera / izin ditolak.");
+                showToast("Gagal membuka kamera. Periksa izin browser.");
                 closeScanner();
             });
         }
